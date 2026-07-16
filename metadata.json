@@ -1,0 +1,6 @@
+{
+  "name": "FounderGPT",
+  "description": "An AI Business Operating System and intelligent co-pilot for small businesses and founders to analyze sales, customers, and operations in real-time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
