@@ -256,7 +256,7 @@ export default function DataManager({ businessData, setBusinessData, onPresetCha
             <div>
               <h4 className="text-xs font-mono uppercase tracking-widest text-[#141414]">Select Sandbox Workspace</h4>
               <p className="text-[11px] text-slate-500 uppercase mt-1">
-                FounderGPT supports immediate dataset hot-swapping. Change your sector focus to repopulate active memory banks.
+                Orlence OS supports immediate dataset hot-swapping. Change your sector focus to repopulate active memory banks.
               </p>
             </div>
 
@@ -305,7 +305,7 @@ export default function DataManager({ businessData, setBusinessData, onPresetCha
               <Sparkles className="w-5 h-5 text-[#141414] shrink-0 mt-0.5 animate-pulse" />
               <div className="text-xs leading-relaxed text-[#141414]">
                 <span className="font-bold text-[10px] font-mono uppercase block mb-1">Sandbox Persistence Model</span>
-                FounderGPT operates as a real-time reactive sandbox. Before executing webhooks or live merchant OAuth credentials, founders can load simulated workspaces or ingest raw CSV logs. This provides safe analytical testing environments instantly.
+                Orlence OS operates as a real-time reactive sandbox. Before executing webhooks or live merchant OAuth credentials, founders can load simulated workspaces or ingest raw CSV logs. This provides safe analytical testing environments instantly.
               </div>
             </div>
           </div>

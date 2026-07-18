@@ -31,14 +31,28 @@ export interface Product {
 }
 
 export interface Integration {
-  id: 'shopify' | 'instagram' | 'whatsapp' | 'paystack' | 'flutterwave' | 'sheets' | 'email' | 'crm';
+  id: string;
   name: string;
   description: string;
   status: 'connected' | 'disconnected' | 'configuring';
   apiKey?: string;
   webhookUrl?: string;
   lastSync?: string;
-  type: 'commerce' | 'payment' | 'messaging' | 'storage' | 'other';
+  type: 'Commerce' | 'Payments' | 'Communication' | 'Accounting' | 'CRM' | 'Documents';
+  unlocks: string[];
+  stats?: {
+    products?: number;
+    orders?: number;
+    customers?: number;
+    revenue?: string;
+  };
+  memory?: string;
+  health?: {
+    status: 'Healthy' | 'Degraded' | 'Offline';
+    webhook: 'Listening' | 'Offline';
+    api: 'Connected' | 'Disconnected';
+    rateLimit: string;
+  };
 }
 
 export interface ChatMessage {

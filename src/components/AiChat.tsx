@@ -115,7 +115,7 @@ export default function AiChat({
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'assistant',
-        text: `⚠️ **Error:** ${err.message || "Failed to communicate with FounderGPT's server. Please verify your GEMINI_API_KEY in the Secrets panel."}`,
+        text: `⚠️ **Error:** ${err.message || "Failed to communicate with Orlence's server. Please verify your GEMINI_API_KEY in the Secrets panel."}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setChatHistory(prev => [...prev, errorMessage]);
@@ -205,7 +205,7 @@ Would you like me to prepare a ${channelLabel}?`,
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-wider text-[#141414] font-bold">FounderGPT Co-Pilot</h4>
+            <h4 className="text-xs font-mono uppercase tracking-wider text-[#141414] font-bold">Orlence Copilot</h4>
             <span className="text-[10px] uppercase font-mono text-green-700 font-bold flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-green-600 animate-pulse"></span>
               Live Analytical Agent

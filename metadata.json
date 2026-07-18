@@ -1,6 +1,6 @@
 {
-  "name": "FounderGPT",
-  "description": "An AI Business Operating System and intelligent co-pilot for small businesses and founders to analyze sales, customers, and operations in real-time.",
+  "name": "Orlence OS",
+  "description": "The Intelligent Operating System for Modern Businesses. Orlence OS unifies business signals — sales, customers, payments, and inventory — into one intelligence layer that helps you understand what is happening, why it is happening, and what to do next.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

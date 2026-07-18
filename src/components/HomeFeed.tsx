@@ -317,7 +317,7 @@ export default function HomeFeed({
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'assistant',
-        text: `⚠️ **Error:** ${err.message || "Failed to communicate with FounderGPT's server. Please verify your GEMINI_API_KEY in the Secrets panel."}`,
+        text: `⚠️ **Error:** ${err.message || "Failed to communicate with Orlence's server. Please verify your GEMINI_API_KEY in the Secrets panel."}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setChatHistory(prev => [...prev, errorMessage]);
@@ -496,7 +496,7 @@ Would you like me to prepare a ${channelLabel}?`,
         {/* Suggestion Prompts Section (Reducing Cognitive Load) */}
         <div className="bg-white p-5 border border-[#141414] rounded-none shadow-none" id="suggested-ceo-actions">
           <h4 className="text-xs font-mono uppercase tracking-wider text-[#141414] flex items-center gap-1.5 font-bold mb-3">
-            <Zap className="w-4 h-4 text-amber-500 shrink-0" /> Suggested Prompts for FounderGPT
+            <Zap className="w-4 h-4 text-amber-500 shrink-0" /> Suggested Prompts for Orlence Copilot
           </h4>
           <p className="text-[10px] text-slate-500 uppercase font-mono mb-4">
             Click one of the suggested operations below. The AI Copilot Console on the right will instantly process the query.

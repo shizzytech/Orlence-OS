@@ -32,13 +32,13 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
-// Full-stack API for FounderGPT conversation
+// Full-stack API for Orlence Intelligence conversation
 app.post("/api/gemini/chat", async (req, res) => {
   try {
     const { messages, businessData, integrations } = req.body;
 
     if (!businessData) {
-      return res.status(400).json({ error: "No business data provided to FounderGPT analysis." });
+      return res.status(400).json({ error: "No business data provided to Orlence Intelligence analysis." });
     }
 
     const ai = getGeminiClient();
@@ -60,7 +60,7 @@ app.post("/api/gemini/chat", async (req, res) => {
       `- ${i.name} (${i.id}): Status: ${i.status}, Webhook URL: ${i.webhookUrl || 'None'}, Last Sync: ${i.lastSync || 'Never'}`
     ).join("\n") : "None";
 
-    const systemInstruction = `You are FounderGPT, a elite, highly analytical AI Business Copilot and Advisor specialized in African and global retail, commerce, and startups.
+    const systemInstruction = `You are Orlence Intelligence, an elite, highly analytical AI Business Copilot and Advisor specialized in African and global retail, commerce, and startups.
 Your goal is to provide concise, direct, numerically precise, and actionable answers to the founder's questions.
 
 Present System Date is 2026-07-15. This is the absolute "today" reference:
@@ -112,7 +112,7 @@ ${formattedIntegrations}
 
     res.json({ text: response.text });
   } catch (error: any) {
-    console.error("FounderGPT Gemini Error:", error);
+    console.error("Orlence Intelligence Gemini Error:", error);
     res.status(500).json({ error: error.message || "An error occurred during Gemini analysis." });
   }
 });
@@ -134,7 +134,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`FounderGPT server running on http://0.0.0.0:${PORT}`);
+    console.log(`Orlence OS server running on http://0.0.0.0:${PORT}`);
   });
 }
 

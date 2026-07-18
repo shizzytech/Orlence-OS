@@ -18,19 +18,42 @@ import AiChat from './components/AiChat';
 import DataManager from './components/DataManager';
 import Integrations from './components/Integrations';
 import HomeFeed from './components/HomeFeed';
+import LandingPage from './components/LandingPage';
 
 const INITIAL_INTEGRATIONS: Integration[] = [
-  { id: 'paystack', name: 'Paystack', description: 'Real-time card, transfer, and mobile money transaction sync for Nigeria & Ghana.', status: 'connected', type: 'payment', webhookUrl: 'https://api.foundergpt.co/api/paystack/webhook' },
-  { id: 'shopify', name: 'Shopify Storefront', description: 'Import product collections, inventory variations, customer tags, and retail orders.', status: 'connected', type: 'commerce', webhookUrl: 'sartorial-africa.myshopify.com' },
-  { id: 'flutterwave', name: 'Flutterwave', description: 'Unified payout settlements, currency conversion, and cards diagnostics across Africa.', status: 'disconnected', type: 'payment' },
-  { id: 'sheets', name: 'Google Sheets', description: 'Load, append, and keep inventory/costs synchronized dynamically with spreadsheets.', status: 'disconnected', type: 'storage' },
-  { id: 'whatsapp', name: 'WhatsApp Business Cloud', description: 'Automate customer support chats, invoice delivery, and recovery of abandoned carts with AI.', status: 'disconnected', type: 'messaging' },
-  { id: 'instagram', name: 'Instagram Creator API', description: 'Monitor social posts, comments, and story mentions to measure lead conversion ROI.', status: 'disconnected', type: 'other' },
-  { id: 'email', name: 'Email API (Resend)', description: 'Dispatch daily invoice receipts, newsletter alerts, and weekly health updates automatically.', status: 'disconnected', type: 'messaging' },
-  { id: 'crm', name: 'HubSpot CRM', description: 'Push active customer contact logs, pipelines, and activity reports to CRM dashboards.', status: 'disconnected', type: 'other' }
+  // Commerce
+  { id: 'bumpa', name: 'Bumpa', description: 'Manage products, inventory, orders and customer records from your Bumpa store.', status: 'disconnected', type: 'Commerce', unlocks: ['AI sales forecasting', 'Product performance analysis', 'Inventory recommendations', 'Customer lifetime value', 'Daily business briefings'] },
+  { id: 'shopify', name: 'Shopify', description: 'Import product collections, inventory variations, customer tags, and retail orders.', status: 'connected', type: 'Commerce', unlocks: ['Sync Orders', 'Customer Analytics', 'Revenue Tracking'], webhookUrl: 'sartorial-africa.myshopify.com', lastSync: '2 minutes ago', stats: { products: 243, orders: 138, customers: 89, revenue: '₦1.2M' }, memory: '2 Years 8 Months', health: { status: 'Healthy', webhook: 'Listening', api: 'Connected', rateLimit: '85%' } },
+  { id: 'woocommerce', name: 'WooCommerce', description: 'Open-source e-commerce plugin for WordPress.', status: 'disconnected', type: 'Commerce', unlocks: ['Sync Orders', 'Inventory tracking', 'Customer sync'] },
+  { id: 'wix', name: 'Wix', description: 'Website builder and e-commerce platform.', status: 'disconnected', type: 'Commerce', unlocks: ['Sync Orders', 'Product sync'] },
+  { id: 'squarespace', name: 'Squarespace', description: 'Website builder and e-commerce platform.', status: 'disconnected', type: 'Commerce', unlocks: ['Sync Orders', 'Product sync'] },
+  
+  // Payments
+  { id: 'paystack', name: 'Paystack', description: 'Real-time card, transfer, and mobile money transaction sync for Nigeria & Ghana.', status: 'connected', type: 'Payments', unlocks: ['Revenue Tracking', 'Failed payment recovery', 'Fraud detection'], webhookUrl: 'https://api.orlence.com/api/paystack/webhook', lastSync: '12 sec ago', health: { status: 'Healthy', webhook: 'Listening', api: 'Connected', rateLimit: '92%' } },
+  { id: 'flutterwave', name: 'Flutterwave', description: 'Unified payout settlements, currency conversion, and cards diagnostics across Africa.', status: 'disconnected', type: 'Payments', unlocks: ['Revenue Tracking', 'Settlement reporting'] },
+  { id: 'stripe', name: 'Stripe', description: 'Global payment processing platform.', status: 'disconnected', type: 'Payments', unlocks: ['Revenue Tracking', 'Subscription analytics'] },
+
+  // Communication
+  { id: 'whatsapp', name: 'WhatsApp', description: 'Automate customer support chats, invoice delivery, and recovery of abandoned carts with AI.', status: 'disconnected', type: 'Communication', unlocks: ['AI Marketing Recommendations', 'Abandoned cart recovery', 'Customer support'] },
+  { id: 'instagram', name: 'Instagram', description: 'Monitor social posts, comments, and story mentions to measure lead conversion ROI.', status: 'disconnected', type: 'Communication', unlocks: ['Social listening', 'Lead generation tracking'] },
+  { id: 'email', name: 'Email', description: 'Dispatch daily invoice receipts, newsletter alerts, and weekly health updates automatically.', status: 'disconnected', type: 'Communication', unlocks: ['Automated reporting', 'Newsletter tracking'] },
+
+  // Accounting
+  { id: 'kippa', name: 'Kippa', description: 'Simple accounting for small businesses in Africa.', status: 'disconnected', type: 'Accounting', unlocks: ['Expense tracking', 'Cash flow prediction'] },
+  { id: 'quickbooks', name: 'QuickBooks', description: 'Accounting software for small businesses.', status: 'disconnected', type: 'Accounting', unlocks: ['Automated reconciliation', 'Tax reporting'] },
+  { id: 'zohobooks', name: 'Zoho Books', description: 'Online accounting software.', status: 'disconnected', type: 'Accounting', unlocks: ['Automated reconciliation', 'Expense tracking'] },
+
+  // CRM
+  { id: 'hubspot', name: 'HubSpot', description: 'Push active customer contact logs, pipelines, and activity reports to CRM dashboards.', status: 'disconnected', type: 'CRM', unlocks: ['Pipeline forecasting', 'Lead scoring'] },
+  { id: 'salesforce', name: 'Salesforce', description: 'Customer relationship management platform.', status: 'disconnected', type: 'CRM', unlocks: ['Enterprise reporting', 'Opportunity tracking'] },
+
+  // Documents
+  { id: 'sheets', name: 'Google Sheets', description: 'Load, append, and keep inventory/costs synchronized dynamically with spreadsheets.', status: 'disconnected', type: 'Documents', unlocks: ['Custom reporting', 'Automated data exports'] },
+  { id: 'excel', name: 'Excel', description: 'Microsoft Excel integration.', status: 'disconnected', type: 'Documents', unlocks: ['Custom reporting', 'Automated data exports'] }
 ];
 
 export default function App() {
+  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations'>('overview');
   const [businessData, setBusinessData] = useState<BusinessData>(SAMPLES.sartorial_africa);
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
@@ -91,7 +114,7 @@ export default function App() {
       {
         id: 'welcome',
         sender: 'assistant',
-        text: `💼 **Meet your AI COO.**
+        text: `💼 **Meet your Orlence Intelligence.**
 
 *"${greetingPrefix}, ${ownerName}."*
 
@@ -111,8 +134,12 @@ Would you like me to prepare a ${channelLabel}?`,
 
   const lowStockCount = businessData.products.filter(p => p.stock <= 5).length;
 
+  if (currentView === 'landing') {
+    return <LandingPage onEnterApp={() => setCurrentView('app')} />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#E4E3E0] flex flex-col antialiased text-[#141414] font-sans" id="foundergpt-root">
+    <div className="min-h-screen bg-[#E4E3E0] flex flex-col antialiased text-[#141414] font-sans" id="orlence-root">
       {/* Upper Brand Utility Ribbon */}
       <div className="bg-[#141414] text-[#E4E3E0]/70 py-2.5 px-6 flex justify-between items-center text-[10px] font-mono uppercase tracking-widest border-b border-[#141414]" id="brand-ribbon">
         <div className="flex items-center gap-4.5" id="ribbon-left">
@@ -121,7 +148,7 @@ Would you like me to prepare a ${channelLabel}?`,
             SYS: STABLE
           </span>
           <span className="hidden md:inline">·</span>
-          <span className="hidden md:inline font-medium">FounderGPT v1.0.4 [PROD]</span>
+          <span className="hidden md:inline font-medium">Orlence OS v1.0.4 [PROD]</span>
         </div>
         
         <div className="flex items-center gap-4" id="ribbon-right">
@@ -150,7 +177,7 @@ Would you like me to prepare a ${channelLabel}?`,
                   {businessData.businessName === "Sartorial Africa" ? '🇳🇬' : businessData.businessName === "Kigali Coffee Co." ? '🇷🇼' : '🇰🇪'}
                 </span>
                 <h1 className="text-xl font-bold uppercase tracking-tighter text-[#141414]">
-                  FounderGPT <span className="font-normal opacity-55 italic">/ {businessData.businessName}</span>
+                  Orlence OS <span className="font-normal opacity-55 italic">/ {businessData.businessName}</span>
                 </h1>
               </div>
               <p className="text-[10px] font-mono uppercase tracking-wider text-slate-600 mt-1.5 flex items-center gap-1">
@@ -302,7 +329,7 @@ Would you like me to prepare a ${channelLabel}?`,
       {/* Global Application Footer */}
       <footer className="border-t border-[#141414] bg-[#141414] text-[#E4E3E0]/80 py-4.5 px-6 flex flex-col md:flex-row items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] mt-12" id="global-footer">
         <div className="max-w-7xl w-full mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 FounderGPT. Build robust multi-source commerce pipelines.</p>
+          <p>© 2026 Orlence. Understand. Decide. Grow.</p>
           <div className="flex gap-4 items-center">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 border border-green-300"></span> Shopify Linked

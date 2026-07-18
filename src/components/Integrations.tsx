@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { 
   Settings, 
-  RefreshCw, 
-  Check, 
-  X, 
-  Sliders, 
-  HelpCircle, 
   Key, 
   Globe, 
   Webhook, 
-  Radio, 
   Play, 
-  Mail, 
   Activity,
-  Bot
+  Bot,
+  CheckCircle2,
+  Zap,
+  BrainCircuit,
+  Database,
+  ArrowRight
 } from 'lucide-react';
 import { Integration, BusinessData, Order, Customer } from '../types';
 
@@ -31,6 +29,8 @@ export default function Integrations({ businessData, setBusinessData, integratio
   const [webhookLogs, setWebhookLogs] = useState<string[]>([]);
   const [simulating, setSimulating] = useState<string | null>(null);
 
+  const categories = ['Commerce', 'Payments', 'Communication', 'Accounting', 'CRM', 'Documents'];
+
   const toggleConnection = (id: string) => {
     setIntegrations(prev => prev.map(integration => {
       if (integration.id === id) {
@@ -38,7 +38,10 @@ export default function Integrations({ businessData, setBusinessData, integratio
         return {
           ...integration,
           status: isConnected ? 'disconnected' : 'connected',
-          lastSync: isConnected ? undefined : new Date().toLocaleString()
+          lastSync: isConnected ? undefined : 'Just now',
+          stats: isConnected ? undefined : { products: 0, orders: 0, customers: 0, revenue: '₦0' },
+          memory: isConnected ? undefined : 'Initializing...',
+          health: isConnected ? undefined : { status: 'Healthy', webhook: 'Listening', api: 'Connected', rateLimit: '100%' }
         };
       }
       return integration;
@@ -63,7 +66,10 @@ export default function Integrations({ businessData, setBusinessData, integratio
           apiKey: apiKeyInput,
           webhookUrl: domainInput,
           status: 'connected',
-          lastSync: new Date().toLocaleString()
+          lastSync: 'Just now',
+          stats: { products: 0, orders: 0, customers: 0, revenue: '₦0' },
+          memory: 'Initializing...',
+          health: { status: 'Healthy', webhook: 'Listening', api: 'Connected', rateLimit: '100%' }
         };
       }
       return integration;
@@ -78,52 +84,34 @@ export default function Integrations({ businessData, setBusinessData, integratio
     setWebhookLogs(prev => [`[${timestamp}] ${msg}`, ...prev].slice(0, 8));
   };
 
-  // Simulating an incoming Paystack / Shopify webhook
-  const triggerSimulation = (type: 'paystack' | 'shopify') => {
+  // Simulating an incoming webhook
+  const triggerSimulation = (type: 'paystack' | 'shopify' | 'bumpa') => {
     setSimulating(type);
     
     setTimeout(() => {
-      // 1. Generate a random transaction amount and customer name
       const nigerianFirstNames = ["Adebayo", "Funmilayo", "Tunde", "Uche", "Ngozi", "Efe", "Damilola"];
       const nigerianLastNames = ["Okonkwo", "Balogun", "Adeyemi", "Eze", "Nwachukwu", "Olatunji"];
-      const ghanianFirstNames = ["Kofi", "Ama", "Kwame", "Yaa", "Ekow", "Abena"];
-      const ghanianLastNames = ["Mensah", "Osei", "Appiah", "Gyasi", "Boateng"];
       
-      const isSartorial = businessData.businessName === "Sartorial Africa";
-      const isKigali = businessData.businessName === "Kigali Coffee Co.";
-      
-      let customerName = "";
-      let country = "Nigeria";
-      
-      if (isKigali) {
-        customerName = `${ghanianFirstNames[Math.floor(Math.random() * ghanianFirstNames.length)]} ${ghanianLastNames[Math.floor(Math.random() * ghanianLastNames.length)]}`;
-        country = "Ghana";
-      } else {
-        customerName = `${nigerianFirstNames[Math.floor(Math.random() * nigerianFirstNames.length)]} ${nigerianLastNames[Math.floor(Math.random() * nigerianLastNames.length)]}`;
-      }
-      
+      let customerName = `${nigerianFirstNames[Math.floor(Math.random() * nigerianFirstNames.length)]} ${nigerianLastNames[Math.floor(Math.random() * nigerianLastNames.length)]}`;
       const customerEmail = `${customerName.toLowerCase().replace(/\s+/g, '.')}@cloudweb.com`;
       
-      // Select a random product from inventory
       const randomProduct = businessData.products[Math.floor(Math.random() * businessData.products.length)];
       if (!randomProduct) return;
 
-      const orderRef = `${type === 'paystack' ? 'T-PAY' : 'ORD-SHPF'}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const orderRef = `${type.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
       const orderAmount = randomProduct.price;
 
-      // 2. Insert order into active memory
       const newOrder: Order = {
         id: orderRef,
-        date: "2026-07-15", // Today
+        date: "2026-07-15",
         customerName,
         customerEmail,
         products: [randomProduct.name],
         amount: orderAmount,
-        paymentMethod: type === 'paystack' ? 'Paystack' : 'Shopify Gateway',
+        paymentMethod: type === 'paystack' ? 'Paystack' : (type === 'bumpa' ? 'Cash' : 'Shopify Gateway'),
         status: 'Paid'
       };
 
-      // 3. Update customer or create one
       const existingCustIdx = businessData.customers.findIndex(c => c.email === customerEmail);
       let updatedCustomers = [...businessData.customers];
 
@@ -137,7 +125,7 @@ export default function Integrations({ businessData, setBusinessData, integratio
           name: customerName,
           email: customerEmail,
           phone: `+234 812 ${Math.floor(1000000 + Math.random() * 9000000)}`,
-          country,
+          country: 'Nigeria',
           totalSpent: orderAmount,
           totalOrders: 1,
           lastActive: "2026-07-15"
@@ -145,7 +133,6 @@ export default function Integrations({ businessData, setBusinessData, integratio
         updatedCustomers.push(newCustomer);
       }
 
-      // 4. Increment product sales and decrement stock if available
       const updatedProducts = businessData.products.map(p => {
         if (p.id === randomProduct.id) {
           return {
@@ -164,153 +151,278 @@ export default function Integrations({ businessData, setBusinessData, integratio
         products: updatedProducts
       }));
 
-      // Register live connected sync sync date
       setIntegrations(prev => prev.map(i => {
         if (i.id === type) {
-          return { ...i, status: 'connected', lastSync: new Date().toLocaleString() };
+          const currentRevenue = i.stats?.revenue ? parseInt(i.stats.revenue.replace(/[^0-9]/g, '')) * (i.stats.revenue.includes('M') ? 1000000 : 1) : 0;
+          const newRevenue = currentRevenue + orderAmount;
+          const formattedRev = newRevenue > 1000000 ? `₦${(newRevenue / 1000000).toFixed(1)}M` : `₦${newRevenue.toLocaleString()}`;
+
+          return { 
+            ...i, 
+            status: 'connected', 
+            lastSync: 'Just now',
+            stats: {
+              products: (i.stats?.products || 0),
+              orders: (i.stats?.orders || 0) + 1,
+              customers: (i.stats?.customers || 0) + (existingCustIdx >= 0 ? 0 : 1),
+              revenue: formattedRev
+            }
+          };
         }
         return i;
       }));
 
       addLog(`SIMULATOR: Inbound Webhook Verified. Created order ${orderRef} for ${customerName} (${businessData.currency}${orderAmount.toLocaleString()})`);
+      
+      if (type === 'bumpa') {
+        addLog(`🧠 ORLENCE AI: New Business Intelligence Generated! Native Wear is best-selling category. Average spend ₦17,300. 63% buy twice. 12 dead stock products found.`);
+      }
+
       setSimulating(null);
     }, 1500);
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" id="integrations-view">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-in" id="integrations-view">
       {/* Integrations Catalog */}
-      <div className="lg:col-span-2 space-y-5" id="integrations-list">
+      <div className="lg:col-span-3 space-y-10" id="integrations-list">
         <div className="bg-white p-5 border border-[#141414] rounded-none shadow-none">
-          <h4 className="text-xs font-mono uppercase tracking-widest text-[#141414]">Integrations Control Panel</h4>
-          <p className="text-[10px] uppercase text-slate-500 mt-1">
-            FounderGPT supports seamless background pipeline relays. Connect webhooks to sync transactions in real-time.
+          <h4 className="text-sm font-mono uppercase tracking-widest text-[#141414] font-bold">Integration Control Panel</h4>
+          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+            Orlence is the intelligence layer for your business. Connect your operational systems to unlock AI capabilities, real-time syncs, and intelligent forecasting.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="integrations-grid">
-          {integrations.map((integration) => {
-            const isEditing = editingId === integration.id;
-            const isConnected = integration.status === 'connected';
+        {categories.map(category => {
+          const categoryIntegrations = integrations.filter(i => i.type === category);
+          if (categoryIntegrations.length === 0) return null;
 
-            return (
-              <div 
-                key={integration.id}
-                className={`bg-white rounded-none border p-5 transition-all flex flex-col justify-between ${
-                  isConnected 
-                    ? 'border-2 border-[#141414]' 
-                    : 'border-[#141414]'
-                }`}
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[9px] font-mono uppercase font-bold text-slate-500 bg-[#F0EFED] border border-[#141414] px-2 py-0.5 rounded-none">
-                      {integration.type}
-                    </span>
-                    <button 
-                      onClick={() => toggleConnection(integration.id)}
-                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 border rounded-none transition-all cursor-pointer ${
+          return (
+            <div key={category} className="space-y-4">
+              <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-[#141414] border-b border-[#141414] pb-2">
+                {category}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {categoryIntegrations.map((integration) => {
+                  const isEditing = editingId === integration.id;
+                  const isConnected = integration.status === 'connected';
+
+                  return (
+                    <div 
+                      key={integration.id}
+                      className={`bg-white rounded-none border transition-all flex flex-col justify-between ${
                         isConnected 
-                          ? 'bg-green-100 text-green-800 border-[#141414]' 
-                          : 'bg-slate-100 text-slate-500 border-[#141414]/30 hover:bg-[#141414] hover:text-[#E4E3E0]'
+                          ? 'border-2 border-[#141414] shadow-[4px_4px_0_0_rgba(20,20,20,1)]' 
+                          : 'border-[#141414] hover:shadow-[4px_4px_0_0_rgba(20,20,20,0.1)]'
                       }`}
                     >
-                      {isConnected ? '● Connected' : '○ Offline'}
-                    </button>
-                  </div>
-
-                  <h5 className="font-bold text-[#141414] text-sm flex items-center gap-1.5">
-                    {integration.name}
-                  </h5>
-                  <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">{integration.description}</p>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-slate-200 space-y-3">
-                  {isEditing ? (
-                    <div className="space-y-2.5 text-[10px] font-mono uppercase">
-                      <div>
-                        <label className="font-bold text-slate-500 block mb-1">Private API Token / Key</label>
-                        <div className="flex gap-2 items-center">
-                          <Key className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <input 
-                            type="password" 
-                            value={apiKeyInput}
-                            onChange={(e) => setApiKeyInput(e.target.value)}
-                            placeholder="sk_live_..."
-                            className="w-full bg-white border border-[#141414] rounded-none p-1.5 outline-none focus:bg-[#F0EFED] text-xs font-mono"
-                          />
+                      <div className="p-5">
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="font-bold text-[#141414] text-lg flex items-center gap-1.5">
+                            {integration.name}
+                          </h5>
+                          {isConnected && (
+                            <span className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-1 bg-green-100 text-green-800 border border-[#141414]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                              Connected
+                            </span>
+                          )}
                         </div>
+                        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed min-h-[40px]">{integration.description}</p>
                       </div>
-                      <div>
-                        <label className="font-bold text-slate-500 block mb-1">
-                          {integration.id === 'sheets' ? 'Spreadsheet URL' : 'Domain / Callback URL'}
-                        </label>
-                        <div className="flex gap-2 items-center">
-                          <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <input 
-                            type="text" 
-                            value={domainInput}
-                            onChange={(e) => setDomainInput(e.target.value)}
-                            placeholder={integration.id === 'sheets' ? 'https://docs.google.com/spreadsheets/...' : 'myshop.myshopify.com'}
-                            className="w-full bg-white border border-[#141414] rounded-none p-1.5 outline-none focus:bg-[#F0EFED] text-xs"
-                          />
+
+                      {/* Disconnected State - Show Capabilities */}
+                      {!isConnected && !isEditing && (
+                        <div className="mt-2 border-t border-[#141414]/10 bg-slate-50/50 p-5">
+                          <p className="text-[10px] font-mono font-bold text-slate-400 uppercase mb-3">Unlocks Capabilities</p>
+                          <ul className="space-y-2">
+                            {integration.unlocks.map((unlock, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-[#141414]">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                {unlock}
+                              </li>
+                            ))}
+                          </ul>
+                          <button 
+                            onClick={() => toggleConnection(integration.id)}
+                            className="w-full mt-5 bg-[#141414] text-[#E4E3E0] font-bold py-2.5 rounded-none border border-[#141414] hover:bg-black transition-colors flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                          >
+                            Connect <ArrowRight className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex gap-2 pt-1 font-mono uppercase text-[9px]">
-                        <button 
-                          onClick={() => handleSaveConfig(integration.id)}
-                          className="w-full bg-[#141414] text-[#E4E3E0] font-bold py-1.5 rounded-none border border-[#141414] hover:bg-black cursor-pointer"
-                        >
-                          Save
-                        </button>
-                        <button 
-                          onClick={() => setEditingId(null)}
-                          className="w-full bg-white text-[#141414] font-bold py-1.5 rounded-none border border-[#141414] hover:bg-[#F0EFED] cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      )}
+
+                      {/* Connected State - Show Stats and Health */}
+                      {isConnected && !isEditing && (
+                        <div className="border-t border-[#141414]">
+                          {/* Sync Status Header */}
+                          <div className="bg-slate-100 px-5 py-3 border-b border-[#141414]/10 flex justify-between items-center text-[10px] font-mono uppercase tracking-wider">
+                            <span className="text-slate-500">Last Sync</span>
+                            <span className="font-bold text-[#141414]">{integration.lastSync}</span>
+                          </div>
+
+                          {/* Imported Stats */}
+                          {integration.stats && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#141414]/10 border-b border-[#141414]/10">
+                              <div className="bg-white p-3 text-center">
+                                <p className="text-[9px] uppercase font-mono text-slate-400">Products</p>
+                                <p className="font-bold text-[#141414] text-sm mt-1">{integration.stats.products}</p>
+                              </div>
+                              <div className="bg-white p-3 text-center">
+                                <p className="text-[9px] uppercase font-mono text-slate-400">Orders</p>
+                                <p className="font-bold text-[#141414] text-sm mt-1">{integration.stats.orders}</p>
+                              </div>
+                              <div className="bg-white p-3 text-center">
+                                <p className="text-[9px] uppercase font-mono text-slate-400">Customers</p>
+                                <p className="font-bold text-[#141414] text-sm mt-1">{integration.stats.customers}</p>
+                              </div>
+                              <div className="bg-white p-3 text-center">
+                                <p className="text-[9px] uppercase font-mono text-slate-400">Revenue</p>
+                                <p className="font-bold text-emerald-600 text-sm mt-1">{integration.stats.revenue}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* AI Memory Badge */}
+                          {integration.memory && (
+                            <div className="px-5 py-4 border-b border-[#141414]/10 bg-indigo-50/50 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <BrainCircuit className="w-4 h-4 text-indigo-600" />
+                                <span className="text-[10px] font-mono font-bold text-indigo-900 uppercase">Business Memory</span>
+                              </div>
+                              <span className="text-xs font-bold text-indigo-600">{integration.memory}</span>
+                            </div>
+                          )}
+
+                          {/* Connection Health */}
+                          {integration.health && (
+                            <div className="px-5 py-4 bg-slate-50 space-y-2">
+                              <p className="text-[9px] font-mono font-bold text-slate-400 uppercase mb-2">Connection Health</p>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-600">Status</span>
+                                <span className="font-bold text-emerald-600 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{integration.health.status}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-600">Webhook</span>
+                                <span className="font-medium text-[#141414]">{integration.health.webhook}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-600">Rate Limit</span>
+                                <span className="font-medium text-[#141414]">{integration.health.rateLimit}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="px-5 py-3 border-t border-[#141414]/10 flex justify-between gap-3">
+                            <button 
+                              onClick={() => handleEdit(integration)}
+                              className="text-[10px] font-mono font-bold uppercase text-slate-500 hover:text-[#141414] flex items-center gap-1.5"
+                            >
+                              <Settings className="w-3.5 h-3.5" /> Configure
+                            </button>
+                            <button 
+                              onClick={() => toggleConnection(integration.id)}
+                              className="text-[10px] font-mono font-bold uppercase text-rose-500 hover:text-rose-700"
+                            >
+                              Disconnect
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Editing State */}
+                      {isEditing && (
+                        <div className="border-t border-[#141414] p-5 bg-slate-50 space-y-4">
+                          <div className="space-y-3 text-[10px] font-mono uppercase">
+                            <div>
+                              <label className="font-bold text-slate-500 block mb-1">Private API Token / Key</label>
+                              <div className="flex gap-2 items-center">
+                                <Key className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <input 
+                                  type="password" 
+                                  value={apiKeyInput}
+                                  onChange={(e) => setApiKeyInput(e.target.value)}
+                                  placeholder="sk_live_..."
+                                  className="w-full bg-white border border-[#141414] rounded-none p-2 outline-none focus:bg-[#F0EFED] text-xs font-mono"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="font-bold text-slate-500 block mb-1">
+                                {integration.type === 'Documents' ? 'Document URL' : 'Domain / Callback URL'}
+                              </label>
+                              <div className="flex gap-2 items-center">
+                                <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <input 
+                                  type="text" 
+                                  value={domainInput}
+                                  onChange={(e) => setDomainInput(e.target.value)}
+                                  placeholder="your-domain.com"
+                                  className="w-full bg-white border border-[#141414] rounded-none p-2 outline-none focus:bg-[#F0EFED] text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-2 font-mono uppercase text-[10px]">
+                            <button 
+                              onClick={() => handleSaveConfig(integration.id)}
+                              className="w-full bg-[#141414] text-[#E4E3E0] font-bold py-2 rounded-none border border-[#141414] hover:bg-black cursor-pointer"
+                            >
+                              Save
+                            </button>
+                            <button 
+                              onClick={() => setEditingId(null)}
+                              className="w-full bg-white text-[#141414] font-bold py-2 rounded-none border border-[#141414] hover:bg-[#F0EFED] cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex justify-between items-center text-[9px] font-mono uppercase text-slate-400">
-                      <span>{integration.lastSync ? `Sync: ${integration.lastSync.split(',')[1]}` : 'Never synchronized'}</span>
-                      <button 
-                        onClick={() => handleEdit(integration)}
-                        className="text-[#141414] hover:underline flex items-center gap-1 font-bold cursor-pointer"
-                      >
-                        <Settings className="w-3 h-3" /> Setup Keys
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Webhook & Sandbox simulator right panel */}
-      <div className="space-y-6" id="integrations-simulation-hub">
-        <div className="bg-white p-5 border border-[#141414] rounded-none shadow-none flex flex-col justify-between min-h-64">
+      <div className="space-y-6 lg:col-span-1" id="integrations-simulation-hub">
+        <div className="bg-white p-5 border border-[#141414] rounded-none shadow-[4px_4px_0_0_rgba(20,20,20,1)] flex flex-col justify-between min-h-64">
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-widest text-[#141414] flex items-center gap-1.5">
-              <Webhook className="w-4 h-4 text-[#141414]" /> Merchant Webhook Simulator
+            <h4 className="text-xs font-mono uppercase tracking-widest text-[#141414] font-bold flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-emerald-500 fill-emerald-500" /> Live Events Simulator
             </h4>
-            <p className="text-[10px] uppercase text-slate-500 mt-2 leading-relaxed">
-              Trigger a test webhook below to simulate commerce events on Paystack and Shopify. Simulated data updates are instantly parsed and rendered.
+            <p className="text-[10px] uppercase text-slate-500 mt-3 leading-relaxed">
+              Trigger a test webhook below to simulate real-world commerce events. Watch Orlence automatically sync and generate intelligence.
             </p>
 
-            <div className="space-y-2.5 mt-5" id="simulators-actions">
+            <div className="space-y-3 mt-6" id="simulators-actions">
+              <button
+                disabled={simulating !== null}
+                onClick={() => triggerSimulation('bumpa')}
+                className="w-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-900/20 text-indigo-900 text-[10px] font-mono uppercase font-bold p-3 rounded-none flex items-center justify-between transition-all disabled:opacity-50 cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Play className="w-3.5 h-3.5" /> Trigger Bumpa Order
+                </span>
+                <span className="text-[9px] bg-indigo-900 text-white px-2 py-0.5 rounded-none font-bold">
+                  {simulating === 'bumpa' ? 'Syncing...' : 'Simulate'}
+                </span>
+              </button>
+
               <button
                 disabled={simulating !== null}
                 onClick={() => triggerSimulation('paystack')}
                 className="w-full bg-white hover:bg-[#F0EFED] border border-[#141414] text-[#141414] text-[10px] font-mono uppercase font-bold p-3 rounded-none flex items-center justify-between transition-all disabled:opacity-50 cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <Play className="w-3.5 h-3.5" /> Trigger Paystack Webhook
+                  <Play className="w-3.5 h-3.5" /> Trigger Paystack
                 </span>
-                <span className="text-[9px] bg-[#141414] text-[#E4E3E0] border border-[#141414] px-2 py-0.5 rounded-none font-bold">
-                  {simulating === 'paystack' ? 'Syncing...' : 'Card Sale'}
+                <span className="text-[9px] bg-[#141414] text-[#E4E3E0] px-2 py-0.5 rounded-none font-bold">
+                  {simulating === 'paystack' ? 'Syncing...' : 'Card'}
                 </span>
               </button>
 
@@ -320,33 +432,36 @@ export default function Integrations({ businessData, setBusinessData, integratio
                 className="w-full bg-white hover:bg-[#F0EFED] border border-[#141414] text-[#141414] text-[10px] font-mono uppercase font-bold p-3 rounded-none flex items-center justify-between transition-all disabled:opacity-50 cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <Play className="w-3.5 h-3.5" /> Trigger Shopify Order Webhook
+                  <Play className="w-3.5 h-3.5" /> Trigger Shopify
                 </span>
-                <span className="text-[9px] bg-[#141414] text-[#E4E3E0] border border-[#141414] px-2 py-0.5 rounded-none font-bold">
-                  {simulating === 'shopify' ? 'Syncing...' : 'Cart Checkout'}
+                <span className="text-[9px] bg-[#141414] text-[#E4E3E0] px-2 py-0.5 rounded-none font-bold">
+                  {simulating === 'shopify' ? 'Syncing...' : 'Cart'}
                 </span>
               </button>
             </div>
           </div>
 
-          <div className="mt-5 pt-4 border-t border-slate-200 text-[9px] font-mono uppercase text-slate-500 flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse shrink-0"></span>
-            <span>Listening for merchant event webhooks...</span>
+          <div className="mt-6 pt-4 border-t border-slate-200 text-[9px] font-mono uppercase text-slate-500 flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Listening for webhooks...</span>
           </div>
         </div>
 
         {/* Console logs */}
-        <div className="bg-[#141414] rounded-none p-4.5 border border-[#141414] shadow-none">
-          <h4 className="text-xs font-mono uppercase tracking-widest text-[#E4E3E0] mb-3 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-sky-400" /> Webhook Log Stream
+        <div className="bg-[#141414] rounded-none p-5 border border-[#141414] shadow-[4px_4px_0_0_rgba(20,20,20,0.3)]">
+          <h4 className="text-xs font-mono uppercase tracking-widest text-[#E4E3E0] font-bold mb-4 flex items-center gap-1.5">
+            <Database className="w-3.5 h-3.5 text-sky-400" /> Intelligence Stream
           </h4>
           
-          <div className="h-32 overflow-y-auto space-y-2 text-[9px] font-mono scrollbar-none" id="log-console">
+          <div className="h-64 overflow-y-auto space-y-3 text-[9px] font-mono scrollbar-none" id="log-console">
             {webhookLogs.length === 0 ? (
-              <p className="text-slate-500 italic uppercase">No incoming requests captured yet. Trigger a simulator above to initialize stream logs.</p>
+              <p className="text-slate-500 italic uppercase">No incoming streams captured yet. Trigger a simulator above to initialize data intake.</p>
             ) : (
               webhookLogs.map((log, idx) => (
-                <div key={idx} className="text-[#E4E3E0] leading-normal truncate border-b border-[#E4E3E0]/10 pb-1.5">
+                <div key={idx} className={`leading-relaxed pb-2 border-b border-[#E4E3E0]/10 ${log.includes('ORLENCE AI') ? 'text-indigo-400 font-bold' : 'text-[#E4E3E0]'}`}>
                   {log}
                 </div>
               ))
