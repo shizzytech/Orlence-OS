@@ -78,7 +78,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6"
             >
               Meet the AI That Runs Your Business With You.
             </motion.h1>
@@ -207,7 +207,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
 
       {/* Problem vs Vision */}
       <section id="vision" className="py-24 px-6 max-w-7xl mx-auto text-center">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Stop Switching Between 10 Business Apps.</h2>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Stop Switching Between 10 Business Apps.</h2>
         <p className="text-xl text-slate-500 mb-16 max-w-2xl mx-auto">They need software that understands everything.</p>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -254,7 +254,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
       {/* Feature Section: Outcomes Show Don't Tell */}
       <section id="features" className="py-24 px-6 max-w-7xl mx-auto border-t border-[#141414]/5">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">Ask One Question. Get Every Business Answer.</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ask One Question. Get Every Business Answer.</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="p-8 border border-[#141414]/10 rounded-xl hover:border-emerald-500/50 transition-colors bg-white shadow-sm flex flex-col">
@@ -303,7 +303,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
       <section className="py-24 bg-slate-100 border-y border-[#141414]/10">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Your First 5 Minutes Every Morning.</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">Your First 5 Minutes Every Morning.</h2>
             <p className="text-lg text-slate-600 mb-8 leading-relaxed">
               Before you open Instagram. Before you check Paystack. Open Orlence and read your personalized Daily CEO Briefing. 
               One screen, all the insight, ready for action.
@@ -363,7 +363,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
 
       {/* Real Business Examples Section */}
       <section className="py-24 px-6 max-w-7xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Built for Businesses Like Yours</h2>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-16">Built for Businesses Like Yours</h2>
         
         <div className="grid md:grid-cols-3 gap-8">
           <div className="bg-white border border-[#141414]/10 rounded-2xl overflow-hidden hover:shadow-xl transition-shadow flex flex-col">
@@ -439,7 +439,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
 
       {/* Meet Your AI Team */}
       <section id="agents" className="py-24 px-6 max-w-7xl mx-auto text-center border-t border-[#141414]/5">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Meet Your AI Team</h2>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Meet Your AI Team</h2>
         <p className="text-xl text-slate-500 mb-16 max-w-2xl mx-auto">Don't hire more staff. Deploy intelligent agents that work 24/7.</p>
         
         <div className="flex flex-wrap justify-center gap-6">
@@ -513,7 +513,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
       {/* Social Proof */}
       <section className="py-24 px-6 bg-slate-50 border-b border-[#141414]/10">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-16">Trusted by African Businesses</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-16">Trusted by African Businesses</h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <div className="bg-white p-8 border border-[#141414]/10 rounded-xl shadow-sm">
@@ -566,7 +566,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
       {/* Pricing */}
       <section id="pricing" className="py-24 px-6 max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">Pricing Built for Your Business</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Pricing Built for Your Business</h2>
           <p className="text-slate-500">Invest in intelligence, not just dashboards.</p>
         </div>
 
@@ -652,7 +652,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
       <section id="waitlist" className="py-32 px-6 bg-emerald-950 text-white text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-800/50 via-emerald-950 to-emerald-950"></div>
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Join the Founder's Circle.</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">Join the Founder's Circle.</h2>
           <p className="text-xl text-emerald-200 mb-10">We're inviting the first 100 businesses to shape Orlence before public launch.</p>
           <div className="w-full flex justify-center">
             <button 

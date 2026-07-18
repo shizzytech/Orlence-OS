@@ -187,7 +187,7 @@ Would you like me to prepare a ${channelLabel}?`,
           </div>
 
           {/* Quick Header Mini Metrics */}
-          <div className="flex gap-4 md:gap-6 text-xs" id="quick-metrics">
+          <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-6 text-xs" id="quick-metrics">
             <div className="bg-white border border-[#141414] px-4 py-2 flex items-center gap-2.5">
               <div className="w-2 h-2 bg-green-500 border border-[#141414]"></div>
               <div>
@@ -329,8 +329,8 @@ Would you like me to prepare a ${channelLabel}?`,
       {/* Global Application Footer */}
       <footer className="border-t border-[#141414] bg-[#141414] text-[#E4E3E0]/80 py-4.5 px-6 flex flex-col md:flex-row items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] mt-12" id="global-footer">
         <div className="max-w-7xl w-full mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 Orlence. Understand. Decide. Grow.</p>
-          <div className="flex gap-4 items-center">
+          <p className="text-center md:text-left w-full md:w-auto">© 2026 Orlence. Understand. Decide. Grow.</p>
+          <div className="flex flex-wrap justify-center gap-4 items-center w-full md:w-auto">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 border border-green-300"></span> Shopify Linked
             </span>

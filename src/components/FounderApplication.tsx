@@ -30,7 +30,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
   const [otherBusinessType, setOtherBusinessType] = useState('');
   const [currentTools, setCurrentTools] = useState<string[]>([]);
   const [otherTool, setOtherTool] = useState('');
-  const [challenge, setChallenge] = useState('');
+  const [challenge, setChallenge] = useState<string[]>([]);
   const [otherChallenge, setOtherChallenge] = useState('');
   const [aiQuestion, setAiQuestion] = useState('');
   const [volume, setVolume] = useState('');
@@ -60,7 +60,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
       setOtherBusinessType('');
       setCurrentTools([]);
       setOtherTool('');
-      setChallenge('');
+      setChallenge([]);
       setOtherChallenge('');
       setAiQuestion('');
       setVolume('');
@@ -75,7 +75,11 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
 
   // Resolved display values (substitutes "Other" with the custom text)
   const resolvedBusinessType = businessType === 'Other' ? (otherBusinessType || 'your business') : businessType;
-  const resolvedChallenge = challenge === 'Other' ? (otherChallenge || 'other challenges') : challenge;
+  
+  const resolvedChallenges = challenge.includes('Other')
+    ? [...challenge.filter(c => c !== 'Other'), otherChallenge].filter(Boolean)
+    : challenge;
+
   const resolvedTools = currentTools.includes('Other')
     ? [...currentTools.filter(t => t !== 'Other'), otherTool].filter(Boolean)
     : currentTools;
@@ -90,7 +94,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
     const knownTools = ['Bumpa', 'Shopify', 'WooCommerce', 'Paystack', 'Flutterwave'];
     if (resolvedTools.some(t => knownTools.includes(t))) s += 20;
     if (['50–200', '200–1000', '1000+'].includes(volume)) s += 20;
-    if (challenge) s += 20;
+    if (challenge.length > 0) s += 20;
     if (aiQuestion.length > 10) s += 20;
     if (contact.phone) s += 10;
     if (contact.website || contact.instagram) s += 10;
@@ -111,7 +115,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
       const { error: sbError } = await supabase.from('founder_applications').insert([{
         business_type: resolvedBusinessType,
         current_tools: resolvedTools,
-        pain_point: resolvedChallenge,
+        pain_point: resolvedChallenges,
         ai_question: aiQuestion,
         monthly_orders: volume,
         name: contact.name,
@@ -133,7 +137,14 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
     }
   };
 
-  const toggleTool = (tool: string) => {
+  const toggleChallenge = (ch: string) => {
+    setChallenge(prev =>
+      prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch]
+    );
+    if (ch === 'Other') {
+      setTimeout(() => otherChallengeInputRef.current?.focus(), 100);
+    }
+  };
     setCurrentTools(prev =>
       prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
     );
@@ -171,12 +182,12 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#141414]/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6 bg-[#141414]/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden relative"
+        className="bg-white sm:rounded-2xl shadow-2xl w-full h-[95vh] sm:h-auto sm:max-w-2xl sm:max-h-[90vh] flex flex-col overflow-hidden relative rounded-t-2xl"
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white z-10">
@@ -340,35 +351,30 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
                 {step === 2 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                     <div className="flex flex-col gap-2 mt-2 mb-4 max-w-md ml-auto">
-                      {CHALLENGES.map(ch => (
-                        <button
-                          key={ch}
-                          onClick={() => {
-                            setChallenge(ch);
-                            if (ch !== 'Other') {
-                              setOtherChallenge('');
-                              handleNext();
-                            } else {
-                              setTimeout(() => otherChallengeInputRef.current?.focus(), 100);
-                            }
-                          }}
-                          className={`text-left px-5 py-3 rounded-xl border text-sm font-medium transition-all ${
-                            challenge === ch
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                              : 'border-slate-200 text-slate-700 bg-white hover:border-emerald-500 hover:shadow-sm'
-                          }`}
-                        >
-                          {ch}
-                        </button>
-                      ))}
+                      {CHALLENGES.map(ch => {
+                        const isSelected = challenge.includes(ch);
+                        return (
+                          <button
+                            key={ch}
+                            onClick={() => toggleChallenge(ch)}
+                            className={`text-left px-5 py-3 rounded-xl border text-sm font-medium transition-all ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                                : 'border-slate-200 text-slate-700 bg-white hover:border-emerald-500 hover:shadow-sm'
+                            }`}
+                          >
+                            {ch}
+                          </button>
+                        );
+                      })}
                     </div>
 
                     {/* "Other" challenge inline input */}
-                    {challenge === 'Other' && (
+                    {challenge.includes('Other') && (
                       <motion.div
                         initial={{ opacity: 0, y: -6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex gap-2 mb-6 max-w-md ml-auto"
+                        className="flex gap-2 mb-4 max-w-md ml-auto"
                       >
                         <input
                           ref={otherChallengeInputRef}
@@ -377,20 +383,22 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
                           onChange={e => setOtherChallenge(e.target.value)}
                           placeholder="Describe your biggest challenge..."
                           className="flex-1 bg-white border border-emerald-400 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          onKeyDown={e => e.key === 'Enter' && otherChallenge && handleNext()}
                         />
-                        <button
-                          onClick={handleNext}
-                          disabled={!otherChallenge}
-                          className="bg-emerald-500 text-white p-3 rounded-xl disabled:opacity-40 hover:bg-emerald-600 transition-colors"
-                        >
-                          <Send className="w-5 h-5" />
-                        </button>
                       </motion.div>
                     )}
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleNext}
+                        disabled={challenge.length === 0 || (challenge.includes('Other') && !otherChallenge)}
+                        className="flex items-center gap-2 bg-[#141414] text-white px-6 py-2.5 rounded-full text-sm font-medium disabled:opacity-50 transition-opacity"
+                      >
+                        Continue <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </motion.div>
                 )}
-                {step > 2 && <UserMessage>{resolvedChallenge}</UserMessage>}
+                {step > 2 && <UserMessage>{resolvedChallenges.join(', ')}</UserMessage>}
               </>
             )}
 
@@ -399,7 +407,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <>
                 <OrlyMessage delay={0.3}>
                   <p>
-                    That's a real pain point for {resolvedBusinessType.toLowerCase()} founders — <strong>{resolvedChallenge.replace(/\.$/, '').toLowerCase()}</strong> is one of the first things Orlence solves.
+                    That's a real pain point for {resolvedBusinessType.toLowerCase()} founders — <strong>{resolvedChallenges[0]?.replace(/\.$/, '').toLowerCase() || 'that'}</strong> is one of the first things Orlence solves.
                   </p>
                   <p className="font-medium mt-2">
                     If Orlence already knew everything about your {resolvedBusinessType.toLowerCase()} business... what's the very first question you'd ask it?
@@ -468,7 +476,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <>
                 <OrlyMessage delay={0.3}>
                   <p>
-                    Perfect. A <strong>{resolvedBusinessType}</strong> founder processing <strong>{volume}</strong> orders with a clear focus on <strong>{resolvedChallenge.replace(/\.$/, '').toLowerCase()}</strong> — you're exactly who we're building Orlence for.
+                    Perfect. A <strong>{resolvedBusinessType}</strong> founder processing <strong>{volume}</strong> orders with a clear focus on solving <strong>{resolvedChallenges.length} key challenges</strong> — you're exactly who we're building Orlence for.
                   </p>
                   <p className="font-medium mt-2">Where should we send your early access invite?</p>
                 </OrlyMessage>
@@ -570,7 +578,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <ul className="space-y-2 text-sm text-slate-600">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>{resolvedChallenge.replace(/\.$/, '')}</span>
+                  <span>Solve: {resolvedChallenges[0]?.replace(/\.$/, '')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
