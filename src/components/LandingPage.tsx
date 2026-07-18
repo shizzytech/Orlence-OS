@@ -58,9 +58,6 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
             <a href="#pricing" className="hover:text-[#141414] transition-colors">Pricing</a>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={onEnterApp} className="text-sm font-medium hover:text-emerald-600 transition-colors hidden md:block">
-              Sign In
-            </button>
             <button 
               onClick={() => setIsApplicationOpen(true)}
               className="bg-[#141414] text-white px-5 py-2 text-sm font-medium rounded-sm hover:bg-emerald-600 transition-colors flex items-center gap-2"
@@ -89,7 +86,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
               transition={{ delay: 0.1 }}
               className="text-lg md:text-xl text-slate-600 mb-8 leading-relaxed"
             >
-              Connect your existing tools. Ask questions in plain English. Get recommendations, forecasts, and automations—all in one place.
+              Connect your existing tools. Ask questions in plain English. Get recommendations, forecasts, and automations - all in one place.
             </motion.p>
             
             <motion.div 
@@ -99,14 +96,14 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
               className="mt-8"
             >
               <button 
-                onClick={() => setIsApplicationOpen(true)}
+                onClick={() => window.location.href = '/founding'}
                 className="bg-[#141414] text-white px-8 py-4 text-sm font-bold rounded-sm hover:bg-emerald-600 transition-colors w-full sm:w-auto flex justify-center items-center shadow-lg"
               >
                 Become a Founding Business
               </button>
               <div className="mt-4 flex items-center gap-4 text-xs font-medium text-slate-400">
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> Early access</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> No credit card</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> No Debit card</span>
                 <button onClick={onEnterApp} className="text-[#141414] hover:text-emerald-600 underline ml-auto flex items-center gap-1">
                   <Activity className="w-3.5 h-3.5" /> Watch Interactive Demo
                 </button>
@@ -118,19 +115,33 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-12 p-4 bg-slate-50 border border-[#141414]/10 rounded-lg flex flex-col sm:flex-row items-center gap-3 text-xs font-medium text-slate-500 max-w-md"
+              className="mt-12 p-5 bg-slate-50 border border-[#141414]/10 rounded-xl max-w-sm"
             >
-              <div className="flex gap-2 text-slate-400">
-                <span>Paystack</span> • <span>Bumpa</span> • <span>WhatsApp</span>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">How it works</p>
+              <div className="flex flex-col gap-2">
+                {/* Tools row */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {['Paystack', 'Bumpa', 'WhatsApp'].map(tool => (
+                    <span key={tool} className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-[11px] font-semibold text-slate-600">{tool}</span>
+                  ))}
+                </div>
+                {/* Arrow */}
+                <div className="flex items-center gap-1 text-slate-300 text-xs pl-1">
+                  <ArrowDownToLine className="w-3.5 h-3.5" />
+                </div>
+                {/* Orlence badge */}
+                <div className="self-start bg-[#141414] text-white px-3 py-1.5 rounded-md font-bold tracking-widest text-[10px]">
+                  ORLENCE AI
+                </div>
+                {/* Arrow */}
+                <div className="flex items-center gap-1 text-slate-300 text-xs pl-1">
+                  <ArrowDownToLine className="w-3.5 h-3.5" />
+                </div>
+                {/* Output */}
+                <div className="self-start px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-md text-emerald-700 font-bold text-[11px]">
+                  Business Answers
+                </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0 hidden sm:block" />
-              <ArrowDownToLine className="w-3.5 h-3.5 shrink-0 sm:hidden" />
-              <div className="bg-[#141414] text-white px-2 py-1 rounded-[4px] shrink-0 font-bold tracking-wide text-[10px]">
-                ORLENCE AI
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0 hidden sm:block" />
-              <ArrowDownToLine className="w-3.5 h-3.5 shrink-0 sm:hidden" />
-              <div className="text-emerald-600 font-bold whitespace-nowrap">Business Answers</div>
             </motion.div>
 
           </div>

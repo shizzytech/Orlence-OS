@@ -19,6 +19,11 @@ import DataManager from './components/DataManager';
 import Integrations from './components/Integrations';
 import HomeFeed from './components/HomeFeed';
 import LandingPage from './components/LandingPage';
+import AdminDashboard from './components/AdminDashboard';
+import LoginPage from './components/auth/LoginPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import FoundingProgram from './components/FoundingProgram';
+import Onboarding from './components/Onboarding';
 
 const INITIAL_INTEGRATIONS: Integration[] = [
   // Commerce
@@ -53,13 +58,26 @@ const INITIAL_INTEGRATIONS: Integration[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'onboarding'>('landing');
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations'>('overview');
   const [businessData, setBusinessData] = useState<BusinessData>(SAMPLES.sartorial_africa);
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/admin') {
+      setCurrentView('admin');
+    } else if (path === '/login') {
+      setCurrentView('login');
+    } else if (path === '/founding') {
+      setCurrentView('founding');
+    } else if (path === '/onboarding') {
+      setCurrentView('onboarding');
+    }
+  }, []);
 
   // Trigger conversational greeting refresh whenever active business dataset changes
   useEffect(() => {
@@ -134,8 +152,34 @@ Would you like me to prepare a ${channelLabel}?`,
 
   const lowStockCount = businessData.products.filter(p => p.stock <= 5).length;
 
+  if (currentView === 'login') {
+    return <LoginPage />;
+  }
+
+  if (currentView === 'admin') {
+    return (
+      <ProtectedRoute requireSuperAdmin>
+        <AdminDashboard />
+      </ProtectedRoute>
+    );
+  }
+
   if (currentView === 'landing') {
     return <LandingPage onEnterApp={() => setCurrentView('app')} />;
+  }
+
+  if (currentView === 'founding') {
+    return <FoundingProgram />;
+  }
+
+  if (currentView === 'onboarding') {
+    return (
+      <ProtectedRoute>
+        <Onboarding onComplete={() => {
+          window.location.href = '/app';
+        }} />
+      </ProtectedRoute>
+    );
   }
 
   return (

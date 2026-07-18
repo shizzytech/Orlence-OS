@@ -15,7 +15,7 @@ const CHALLENGES = [
   'Cashflow.',
   'Other'
 ];
-const VOLUMES = ['Less than 50', '50–200', '200–1000', '1000+'];
+const VOLUMES = ['Less than 50', '50-200', '200-1000', '1000+'];
 
 interface FounderApplicationProps {
   isOpen: boolean;
@@ -35,7 +35,16 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
   const [aiQuestion, setAiQuestion] = useState('');
   const [volume, setVolume] = useState('');
 
-  const [contact, setContact] = useState({ name: '', email: '', phone: '', business_name: '', website: '', instagram: '' });
+  const [contact, setContact] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    business_name: '',
+    website: '',
+    instagram: '',
+    country: '',
+    referral_source: ''
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState(0);
@@ -64,7 +73,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
       setOtherChallenge('');
       setAiQuestion('');
       setVolume('');
-      setContact({ name: '', email: '', phone: '', business_name: '', website: '', instagram: '' });
+      setContact({ name: '', email: '', phone: '', business_name: '', website: '', instagram: '', country: '', referral_source: '' });
       setScore(0);
       setError('');
       setIsSubmitting(false);
@@ -93,7 +102,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
     let s = 20;
     const knownTools = ['Bumpa', 'Shopify', 'WooCommerce', 'Paystack', 'Flutterwave'];
     if (resolvedTools.some(t => knownTools.includes(t))) s += 20;
-    if (['50–200', '200–1000', '1000+'].includes(volume)) s += 20;
+    if (['50-200', '200-1000', '1000+'].includes(volume)) s += 20;
     if (challenge.length > 0) s += 20;
     if (aiQuestion.length > 10) s += 20;
     if (contact.phone) s += 10;
@@ -124,6 +133,8 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
         business_name: contact.business_name,
         website: contact.website,
         instagram: contact.instagram,
+        country: contact.country,
+        referral_source: contact.referral_source,
         priority_score: finalScore
       }]);
 
@@ -145,6 +156,8 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
       setTimeout(() => otherChallengeInputRef.current?.focus(), 100);
     }
   };
+
+  const toggleTool = (tool: string) => {
     setCurrentTools(prev =>
       prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
     );
@@ -344,7 +357,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
             {step >= 2 && (
               <>
                 <OrlyMessage delay={0.3}>
-                  <p>Interesting stack — lots of {resolvedBusinessType.toLowerCase()} businesses use similar tools.</p>
+                  <p>Interesting stack - lots of {resolvedBusinessType.toLowerCase()} businesses use similar tools.</p>
                   <p className="font-medium mt-2">What's your biggest frustration in understanding your business today?</p>
                 </OrlyMessage>
 
@@ -407,7 +420,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <>
                 <OrlyMessage delay={0.3}>
                   <p>
-                    That's a real pain point for {resolvedBusinessType.toLowerCase()} founders — <strong>{resolvedChallenges[0]?.replace(/\.$/, '').toLowerCase() || 'that'}</strong> is one of the first things Orlence solves.
+                    That's a real pain point for {resolvedBusinessType.toLowerCase()} founders - <strong>{resolvedChallenges[0]?.replace(/\.$/, '').toLowerCase() || 'that'}</strong> is one of the first things Orlence solves.
                   </p>
                   <p className="font-medium mt-2">
                     If Orlence already knew everything about your {resolvedBusinessType.toLowerCase()} business... what's the very first question you'd ask it?
@@ -443,7 +456,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <>
                 <OrlyMessage delay={0.3}>
                   <p>
-                    That's a great question — and Orlence answers exactly that. 
+                    That's a great question - and Orlence answers exactly that. 
                   </p>
                   <p className="font-medium mt-2">Approximately how many orders does your {resolvedBusinessType.toLowerCase()} business process monthly?</p>
                 </OrlyMessage>
@@ -476,7 +489,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               <>
                 <OrlyMessage delay={0.3}>
                   <p>
-                    Perfect. A <strong>{resolvedBusinessType}</strong> founder processing <strong>{volume}</strong> orders with a clear focus on solving <strong>{resolvedChallenges.length} key challenges</strong> — you're exactly who we're building Orlence for.
+                    Perfect. A <strong>{resolvedBusinessType}</strong> founder processing <strong>{volume}</strong> orders with a clear focus on solving <strong>{resolvedChallenges.length} key challenges</strong> - you're exactly who we're building Orlence for.
                   </p>
                   <p className="font-medium mt-2">Where should we send your early access invite?</p>
                 </OrlyMessage>
@@ -507,8 +520,34 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
                         <input type="tel" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none" placeholder="e.g. +234..." />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Website / Instagram (Optional)</label>
-                        <input type="text" value={contact.website} onChange={e => setContact({ ...contact, website: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none" placeholder="yourstore.com or @yourhandle" />
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Social Media Link / Handle (Optional)</label>
+                        <input type="text" value={contact.instagram} onChange={e => setContact({ ...contact, instagram: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none" placeholder="e.g. @yourhandle, linkedin.com/in/..." />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Country *</label>
+                        <select required value={contact.country} onChange={e => setContact({ ...contact, country: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none bg-white">
+                          <option value="" disabled>Select Country</option>
+                          <option value="Nigeria">Nigeria</option>
+                          <option value="Kenya">Kenya</option>
+                          <option value="Rwanda">Rwanda</option>
+                          <option value="South Africa">South Africa</option>
+                          <option value="Ghana">Ghana</option>
+                          <option value="USA">USA</option>
+                          <option value="UK">UK</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">How did you hear about us? *</label>
+                        <select required value={contact.referral_source} onChange={e => setContact({ ...contact, referral_source: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none bg-white">
+                          <option value="" disabled>Select Source</option>
+                          <option value="Twitter / X">Twitter / X</option>
+                          <option value="LinkedIn">LinkedIn</option>
+                          <option value="Instagram">Instagram</option>
+                          <option value="Word of Mouth">Word of Mouth</option>
+                          <option value="Google Search">Google Search</option>
+                          <option value="Other">Other</option>
+                        </select>
                       </div>
                     </div>
 
@@ -530,7 +569,8 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
           </div>
         ) : (
           /* ── Success Screen ── */
-          <div className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-slate-50">
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-slate-50 flex flex-col">
+            <div className="m-auto flex flex-col items-center text-center w-full max-w-md py-4">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -554,7 +594,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
               transition={{ delay: 0.3 }}
               className="text-slate-600 mb-8 max-w-md"
             >
-              {contact.business_name ? `${contact.business_name} is on the list.` : 'Your business is on the list.'} We're reviewing applications in small batches — here's your initial profile:
+              {contact.business_name ? `${contact.business_name} is on the list.` : 'Your business is on the list.'} We're reviewing applications in small batches - here's your initial profile:
             </motion.p>
 
             <motion.div
@@ -586,7 +626,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
                 </li>
                 <li className="flex items-start gap-2 text-slate-400">
                   <div className="w-4 h-4 rounded-full border border-slate-300 mt-0.5 shrink-0" />
-                  <span>Answer: "{aiQuestion}" — live when you join</span>
+                  <span>Answer: "{aiQuestion}" - live when you join</span>
                 </li>
               </ul>
             </motion.div>
@@ -600,6 +640,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
             >
               Close and return to site
             </motion.button>
+            </div>
           </div>
         )}
       </motion.div>
