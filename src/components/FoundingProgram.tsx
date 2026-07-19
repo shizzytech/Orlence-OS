@@ -5,32 +5,13 @@ import {
   MessageSquare, BrainCircuit, Target, Sparkles, Building2, Crown
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useLaunch } from '../context/LaunchContext';
 import FounderApplication from './FounderApplication';
 
 export default function FoundingProgram() {
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
-  const [acceptedCount, setAcceptedCount] = useState(0);
-  const [loadingCount, setLoadingCount] = useState(true);
+  const { activeProgram, loading } = useLaunch();
 
-  useEffect(() => {
-    async function fetchAcceptedCount() {
-      try {
-        const { count, error } = await supabase
-          .from('founder_applications')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'approved');
-        
-        if (!error && count !== null) {
-          setAcceptedCount(count);
-        }
-      } catch (err) {
-        console.error('Error fetching accepted count:', err);
-      } finally {
-        setLoadingCount(false);
-      }
-    }
-    fetchAcceptedCount();
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] text-[#141414] font-sans selection:bg-emerald-500 selection:text-white pb-32">
@@ -61,7 +42,7 @@ export default function FoundingProgram() {
           animate={{ opacity: 1, y: 0 }}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold mb-8"
         >
-          <Crown className="w-4 h-4" /> The Founding 50
+          <Crown className="w-4 h-4" /> {activeProgram?.name || 'Founding Program'}
         </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
@@ -77,7 +58,7 @@ export default function FoundingProgram() {
           transition={{ delay: 0.2 }}
           className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto"
         >
-          We're selecting 50 ambitious businesses to become our founding partners. You won't just use Orlence - you'll help shape it.
+          We're selecting {activeProgram?.max_members || 50} ambitious businesses to become our founding partners. You won't just use Orlence - you'll help shape it.
         </motion.p>
 
         {/* Live Counter */}
@@ -89,25 +70,34 @@ export default function FoundingProgram() {
         >
           <div className="flex items-end justify-center gap-2 mb-4">
             <span className="text-5xl font-black text-[#141414] tracking-tighter">
-              {loadingCount ? '...' : acceptedCount}
+              {loading ? '...' : activeProgram?.accepted_members || 0}
             </span>
-            <span className="text-xl text-slate-400 font-medium mb-1">/ 50</span>
+            <span className="text-xl text-slate-400 font-medium mb-1">/ {activeProgram?.max_members || 50}</span>
           </div>
           <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-4">Founding Businesses Accepted</p>
           
           <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-8">
             <div 
-              className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
-              style={{ width: `${Math.min(100, ((loadingCount ? 0 : acceptedCount) / 50) * 100)}%` }}
+              className={`h-full rounded-full transition-all duration-1000 ${activeProgram?.status === 'closed' ? 'bg-rose-500' : 'bg-emerald-500'}`}
+              style={{ width: `${Math.min(100, ((loading ? 0 : (activeProgram?.accepted_members || 0)) / (activeProgram?.max_members || 50)) * 100)}%` }}
             />
           </div>
 
-          <button 
-            onClick={() => setIsApplicationOpen(true)}
-            className="w-full bg-[#141414] text-white py-4 rounded-xl font-bold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-          >
-            Apply as a Founding Business <ArrowRight className="w-5 h-5" />
-          </button>
+          {activeProgram?.status === 'closed' ? (
+            <button 
+              onClick={() => setIsApplicationOpen(true)}
+              className="w-full bg-rose-500 text-white py-4 rounded-xl font-bold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+            >
+              Founding Cohort Full - Join Waitlist <ArrowRight className="w-5 h-5" />
+            </button>
+          ) : (
+            <button 
+              onClick={() => setIsApplicationOpen(true)}
+              className="w-full bg-[#141414] text-white py-4 rounded-xl font-bold hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+            >
+              Apply as a Founding Business <ArrowRight className="w-5 h-5" />
+            </button>
+          )}
         </motion.div>
       </section>
 
@@ -122,7 +112,7 @@ export default function FoundingProgram() {
           <h3 className="text-2xl font-bold mb-6">What You'll Receive</h3>
           <ul className="space-y-4">
             {[
-              "Founder pricing for life",
+              `Founder pricing for life (${activeProgram?.founder_pricing || '₦10,000'})`,
               "White-glove onboarding and manual workspace setup",
               "Direct priority access to the founding team",
               "Top priority for feature requests and integrations",
@@ -214,7 +204,7 @@ export default function FoundingProgram() {
               <div className="font-black text-xl tracking-widest text-white mb-1">ORLENCE</div>
               <div className="text-[10px] uppercase tracking-[0.3em] text-emerald-400 font-bold mb-4">Founding Business</div>
               <div className="px-3 py-1 bg-white/10 rounded-full text-xs font-mono text-slate-300">
-                2026 Cohort
+                {activeProgram?.cohort || '2026 Cohort'}
               </div>
             </div>
           </div>
@@ -223,12 +213,21 @@ export default function FoundingProgram() {
 
       {/* Bottom CTA */}
       <section className="px-6 text-center mt-24">
-        <button 
-          onClick={() => setIsApplicationOpen(true)}
-          className="bg-emerald-600 text-white px-10 py-5 text-lg font-bold rounded-xl hover:bg-emerald-700 transition-colors inline-flex items-center gap-3 shadow-xl shadow-emerald-600/20"
-        >
-          Start Your Application <ArrowRight className="w-6 h-6" />
-        </button>
+        {activeProgram?.status === 'closed' ? (
+          <button 
+            onClick={() => setIsApplicationOpen(true)}
+            className="bg-rose-500 text-white px-10 py-5 text-lg font-bold rounded-xl hover:bg-rose-600 transition-colors inline-flex items-center gap-3 shadow-xl shadow-rose-500/20"
+          >
+            Join the Waitlist <ArrowRight className="w-6 h-6" />
+          </button>
+        ) : (
+          <button 
+            onClick={() => setIsApplicationOpen(true)}
+            className="bg-emerald-600 text-white px-10 py-5 text-lg font-bold rounded-xl hover:bg-emerald-700 transition-colors inline-flex items-center gap-3 shadow-xl shadow-emerald-600/20"
+          >
+            Start Your Application <ArrowRight className="w-6 h-6" />
+          </button>
+        )}
       </section>
 
       {/* Application Modal */}

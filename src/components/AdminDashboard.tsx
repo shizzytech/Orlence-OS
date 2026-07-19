@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useLaunch } from '../context/LaunchContext';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { Users, TrendingUp, Search, Database, LogOut, Loader2, ArrowLeft, UserCheck, UserX, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Users, TrendingUp, Search, Database, LogOut, Loader2, ArrowLeft, UserCheck, UserX, ShieldCheck, RefreshCw, Rocket, AlertTriangle } from 'lucide-react';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f43f5e', '#84cc16'];
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'team'>('analytics');
+  const { settings, activeProgram, loading: launchLoading, updateSetting, updateProgram } = useLaunch();
+  const [activeTab, setActiveTab] = useState<'analytics' | 'team' | 'launch'>('launch');
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -169,6 +171,14 @@ export default function AdminDashboard() {
           {/* Tab Nav */}
           <nav className="flex items-center bg-white/5 rounded-lg p-1 gap-0.5">
             <button
+              onClick={() => setActiveTab('launch')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-all flex items-center gap-1.5 ${
+                activeTab === 'launch' ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Rocket className="w-3.5 h-3.5" /> Launch Control
+            </button>
+            <button
               onClick={() => setActiveTab('analytics')}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-all flex items-center gap-1.5 ${
                 activeTab === 'analytics' ? 'bg-white/15 text-white' : 'text-slate-400 hover:text-white'
@@ -220,11 +230,149 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {loading ? (
+      {loading || launchLoading ? (
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
           <p className="text-slate-500">Decrypting founder intelligence...</p>
         </div>
+      ) : activeTab === 'launch' ? (
+        <main className="max-w-4xl mx-auto px-6 sm:px-10 pt-10">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Rocket className="w-6 h-6 text-emerald-600" />
+                Launch Control Center
+              </h2>
+              <p className="text-slate-500 text-sm mt-1">Manage cohorts, waitlists, pricing, and platform access.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Column: Platform Settings */}
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold mb-4">Platform Status</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">Public Waitlist</p>
+                      <p className="text-xs text-slate-500">Allow users to join waitlist</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={settings.waitlist_enabled} onChange={(e) => updateSetting('waitlist_enabled', e.target.checked)} />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">Invite Only</p>
+                      <p className="text-xs text-slate-500">Require invite to join</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={settings.invite_only} onChange={(e) => updateSetting('invite_only', e.target.checked)} />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">Beta Open</p>
+                      <p className="text-xs text-slate-500">Open signups</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={settings.beta_open} onChange={(e) => updateSetting('beta_open', e.target.checked)} />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Active Cohort Program */}
+            <div className="md:col-span-2 space-y-6">
+              {activeProgram && (
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className={`absolute top-0 right-0 px-3 py-1 text-xs font-bold rounded-bl-xl ${activeProgram.status === 'accepting' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {activeProgram.status.toUpperCase()}
+                  </div>
+                  
+                  <h3 className="font-bold text-lg mb-1">Active Program</h3>
+                  <p className="text-sm text-slate-500 mb-6">{activeProgram.name} • {activeProgram.cohort}</p>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Maximum Members</p>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="number" 
+                          className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-lg font-bold focus:outline-none focus:border-emerald-500"
+                          value={activeProgram.max_members}
+                          onChange={(e) => updateProgram(activeProgram.id, { max_members: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Founder Pricing</p>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="text" 
+                          className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-lg font-bold focus:outline-none focus:border-emerald-500"
+                          value={activeProgram.founder_pricing}
+                          onChange={(e) => updateProgram(activeProgram.id, { founder_pricing: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="flex justify-between items-end mb-2">
+                      <p className="text-sm font-medium text-slate-700">Program Fill Status</p>
+                      <p className="text-sm font-bold">{activeProgram.accepted_members} / {activeProgram.max_members} <span className="text-slate-400 font-normal">Accepted</span></p>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${activeProgram.accepted_members >= activeProgram.max_members ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.min(100, (activeProgram.accepted_members / activeProgram.max_members) * 100)}%` }}
+                      />
+                    </div>
+                    {activeProgram.accepted_members >= activeProgram.max_members && (
+                      <p className="text-xs text-rose-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Cohort is fully booked.</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between py-3 border-t border-slate-100">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">Auto-Close Program</p>
+                      <p className="text-xs text-slate-500">Close applications when max members reached</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={activeProgram.auto_close} onChange={(e) => updateProgram(activeProgram.id, { auto_close: e.target.checked })} />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-3 border-t border-slate-100">
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">Force Program Status</p>
+                      <p className="text-xs text-slate-500">Manually open or close applications</p>
+                    </div>
+                    <select 
+                      className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
+                      value={activeProgram.status}
+                      onChange={(e) => updateProgram(activeProgram.id, { status: e.target.value as any })}
+                    >
+                      <option value="accepting">Accepting</option>
+                      <option value="closed">Closed</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
       ) : activeTab === 'analytics' ? (
         <main className="max-w-7xl mx-auto px-6 sm:px-10 pt-10">
           
@@ -499,7 +647,7 @@ export default function AdminDashboard() {
           </div>
 
         </main>
-      ) : (
+      ) : activeTab === 'team' ? (
         /* ===== TEAM & ROLES TAB ===== */
         <main className="max-w-5xl mx-auto px-6 sm:px-10 pt-10">
           <div className="flex items-center justify-between mb-8">
@@ -609,7 +757,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </main>
-      )}
+      ) : null}
     </div>
   );
 }

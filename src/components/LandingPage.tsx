@@ -21,11 +21,13 @@ import {
   ArrowDownToLine,
   Activity
 } from 'lucide-react';
+import { useLaunch } from '../context/LaunchContext';
 import FounderApplication from './FounderApplication';
 
 export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
   const [activePrompt, setActivePrompt] = useState(0);
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
+  const { activeProgram } = useLaunch();
   const prompts = [
     "Why did sales drop yesterday?",
     "Predict August revenue based on current trends.",
@@ -60,9 +62,9 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsApplicationOpen(true)}
-              className="bg-[#141414] text-white px-5 py-2 text-sm font-medium rounded-sm hover:bg-emerald-600 transition-colors flex items-center gap-2"
+              className={`${activeProgram?.status === 'closed' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-[#141414] hover:bg-emerald-600'} text-white px-5 py-2 text-sm font-medium rounded-sm transition-colors flex items-center gap-2`}
             >
-              Apply for Access <ArrowRight className="w-4 h-4" />
+              {activeProgram?.status === 'closed' ? 'Join Waitlist' : 'Apply for Access'} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -97,16 +99,13 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
             >
               <button 
                 onClick={() => window.location.href = '/founding'}
-                className="bg-[#141414] text-white px-8 py-4 text-sm font-bold rounded-sm hover:bg-emerald-600 transition-colors w-full sm:w-auto flex justify-center items-center shadow-lg"
+                className={`${activeProgram?.status === 'closed' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-[#141414] hover:bg-emerald-600'} text-white px-8 py-4 text-sm font-bold rounded-sm transition-colors w-full sm:w-auto flex justify-center items-center shadow-lg`}
               >
-                Become a Founding Business
+                {activeProgram?.status === 'closed' ? 'Founding Cohort Full - Join Waitlist' : 'Become a Founding Business'}
               </button>
               <div className="mt-4 flex items-center gap-4 text-xs font-medium text-slate-400">
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> Early access</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> No Debit card</span>
-                <button onClick={onEnterApp} className="text-[#141414] hover:text-emerald-600 underline ml-auto flex items-center gap-1">
-                  <Activity className="w-3.5 h-3.5" /> Watch Interactive Demo
-                </button>
               </div>
             </motion.div>
 
@@ -664,7 +663,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-800/50 via-emerald-950 to-emerald-950"></div>
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">Join the Founder's Circle.</h2>
-          <p className="text-xl text-emerald-200 mb-10">We're inviting the first 100 businesses to shape Orlence before public launch.</p>
+          <p className="text-xl text-emerald-200 mb-10">We're inviting the first {activeProgram?.max_members || 100} businesses to shape Orlence before public launch.</p>
           <div className="w-full flex justify-center">
             <button 
               onClick={() => setIsApplicationOpen(true)}
