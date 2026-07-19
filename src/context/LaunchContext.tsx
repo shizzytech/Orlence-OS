@@ -9,6 +9,11 @@ export interface PlatformSettings {
   [key: string]: string | boolean;
 }
 
+export interface PricingPlan {
+  name: string;
+  price: string;
+}
+
 export interface FoundingProgram {
   id: string;
   name: string;
@@ -16,7 +21,9 @@ export interface FoundingProgram {
   max_members: number;
   accepted_members: number;
   status: 'draft' | 'accepting' | 'closed' | 'active';
-  founder_pricing: string;
+  founder_pricing?: string;
+  pricing_plans: PricingPlan[];
+  benefits: string[];
   auto_close: boolean;
   start_date?: string;
   end_date?: string;
@@ -46,6 +53,18 @@ const defaultProgram: FoundingProgram = {
   accepted_members: 0,
   status: 'accepting',
   founder_pricing: '₦10,000',
+  pricing_plans: [
+    { name: 'Starter Plan', price: '₦7,500/month' },
+    { name: 'Growth Plan', price: '₦15,000/month' },
+    { name: 'Scale Plan', price: '₦30,000/month' }
+  ],
+  benefits: [
+    'Lifetime pricing lock',
+    'Priority support',
+    'Early AI access',
+    'Direct roadmap influence',
+    'Founder badge'
+  ],
   auto_close: true,
 };
 

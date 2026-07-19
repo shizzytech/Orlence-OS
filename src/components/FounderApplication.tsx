@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Bot, X, ArrowRight, CheckCircle2, Activity, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useLaunch } from '../context/LaunchContext';
 
 const BUSINESS_TYPES = ['Fashion', 'Restaurant', 'Pharmacy', 'Electronics', 'Beauty', 'Grocery', 'Manufacturing', 'Professional Services', 'Agency', 'Other'];
 const TOOLS = ['Bumpa', 'Shopify', 'WooCommerce', 'Paystack', 'Flutterwave', 'WhatsApp Business', 'Instagram', 'Google Sheets', 'Excel', 'HubSpot', 'Zoho', 'Other'];
@@ -23,6 +24,7 @@ interface FounderApplicationProps {
 }
 
 export default function FounderApplication({ isOpen, onClose }: FounderApplicationProps) {
+  const { activeProgram } = useLaunch();
   const [step, setStep] = useState(0);
 
   // Data State
@@ -122,6 +124,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
 
     try {
       const { error: sbError } = await supabase.from('founder_applications').insert([{
+        program_id: activeProgram?.id,
         business_type: resolvedBusinessType,
         current_tools: resolvedTools,
         pain_point: resolvedChallenges,

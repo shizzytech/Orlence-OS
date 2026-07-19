@@ -5,7 +5,7 @@ import { useLaunch } from '../context/LaunchContext';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { Users, TrendingUp, Search, Database, LogOut, Loader2, ArrowLeft, UserCheck, UserX, ShieldCheck, RefreshCw, Rocket, AlertTriangle } from 'lucide-react';
+import { Users, TrendingUp, Search, Database, LogOut, Loader2, ArrowLeft, UserCheck, UserX, ShieldCheck, RefreshCw, Rocket, AlertTriangle, Clock, ArrowRight, CheckCircle2, Phone, Instagram } from 'lucide-react';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f43f5e', '#84cc16'];
 
@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const [teamLoading, setTeamLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [approvedApp, setApprovedApp] = useState<{ email: string; name: string } | null>(null);
+  const [showBusinessBreakdown, setShowBusinessBreakdown] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -77,7 +78,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateStatus = async (appId: string, newStatus: 'approved' | 'rejected' | 'waitlisted' | 'pending') => {
+  const handleUpdateStatus = async (appId: string, newStatus: 'approved' | 'rejected' | 'waitlisted' | 'pending' | 'reviewing' | 'interview_booked' | 'onboarding' | 'active') => {
     setUpdatingId(appId);
     try {
       // Find the application
@@ -112,6 +113,48 @@ export default function AdminDashboard() {
   };
 
   // --- Data Processing ---
+
+  // Funnel stats from live application data
+  const funnelStats = {
+    pending:          applications.filter(a => !a.status || a.status === 'pending').length,
+    reviewing:        applications.filter(a => a.status === 'reviewing').length,
+    interview_booked: applications.filter(a => a.status === 'interview_booked').length,
+    approved:         applications.filter(a => a.status === 'approved').length,
+    onboarding:       applications.filter(a => a.status === 'onboarding').length,
+    active:           applications.filter(a => a.status === 'active').length,
+    rejected:         applications.filter(a => a.status === 'rejected').length,
+    waitlisted:       applications.filter(a => a.status === 'waitlisted').length,
+    total:            applications.length,
+  };
+
+  // Today's interviews
+  const today = new Date().toISOString().slice(0, 10);
+  const todaysInterviews = applications.filter(a =>
+    a.status === 'interview_booked' && a.interview_date?.slice(0, 10) === today
+  ).length;
+
+  // Business type breakdown (accepted only)
+  const acceptedApps = applications.filter(a => a.status === 'approved' || a.status === 'onboarding' || a.status === 'active');
+  const bizTypeCounts = acceptedApps.reduce((acc: Record<string, number>, app) => {
+    const t = app.business_type || 'Other';
+    acc[t] = (acc[t] || 0) + 1;
+    return acc;
+  }, {});
+  const businessTypeBreakdown = Object.entries(bizTypeCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Referral sources
+  const referralSrc = applications.reduce((acc: Record<string, number>, app) => {
+    const s = app.referral_source || 'Unknown';
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {});
+  const totalReferrals = applications.length || 1;
+  const referralBreakdown = Object.entries(referralSrc)
+    .map(([name, count]) => ({ name, count, pct: Math.round((count / totalReferrals) * 100) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
   
   // 1. Industries
   const industryCounts = applications.reduce((acc: any, app) => {
@@ -146,7 +189,7 @@ export default function AdminDashboard() {
       });
     }
   });
-  const integrationsData = Object.keys(toolCounts).map(key => ({ name: key, count: toolCounts[key] })).sort((a, b) => b.count - a.count).slice(0, 8); // Top 8
+  const integrationsData = Object.keys(toolCounts).map(key => ({ name: key, count: toolCounts[key] })).sort((a, b) => b.count - a.count).slice(0, 8);
 
   // 5. AI Questions
   const recentQuestions = applications.filter(a => a.ai_question).slice(0, 10);
@@ -236,143 +279,376 @@ export default function AdminDashboard() {
           <p className="text-slate-500">Decrypting founder intelligence...</p>
         </div>
       ) : activeTab === 'launch' ? (
-        <main className="max-w-4xl mx-auto px-6 sm:px-10 pt-10">
-          <div className="flex items-center justify-between mb-8">
+        <main className="max-w-6xl mx-auto px-6 sm:px-10 pt-10 pb-16 space-y-8">
+
+          {/* ── HEADER ── */}
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Rocket className="w-6 h-6 text-emerald-600" />
                 Launch Control Center
               </h2>
-              <p className="text-slate-500 text-sm mt-1">Manage cohorts, waitlists, pricing, and platform access.</p>
+              <p className="text-slate-500 text-sm mt-1">Manage cohorts, waitlists, and the full application funnel.</p>
             </div>
+            <button onClick={fetchData} className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left Column: Platform Settings */}
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold mb-4">Platform Status</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+          {/* ── ROW 1: Cohort + Platform ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Founding Cohort Card with clickable progress */}
+            {activeProgram && (
+              <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 pt-6 pb-5">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
-                      <p className="text-sm font-medium text-slate-800">Public Waitlist</p>
-                      <p className="text-xs text-slate-500">Allow users to join waitlist</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Founding Cohort</p>
+                      <input
+                        className="text-xl font-black mt-0.5 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 focus:outline-none w-full transition-colors pb-0.5"
+                        value={activeProgram.name}
+                        onChange={(e) => updateProgram(activeProgram.id, { name: e.target.value })}
+                        title="Edit program name"
+                      />
+                      <input
+                        className="text-xs text-slate-500 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 focus:outline-none w-full transition-colors pb-0.5"
+                        value={activeProgram.cohort}
+                        onChange={(e) => updateProgram(activeProgram.id, { cohort: e.target.value })}
+                        title="Edit cohort label"
+                      />
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.waitlist_enabled} onChange={(e) => updateSetting('waitlist_enabled', e.target.checked)} />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
+                    <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider ${activeProgram.status === 'accepting' ? 'bg-emerald-100 text-emerald-700' : activeProgram.status === 'closed' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {activeProgram.status}
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">Invite Only</p>
-                      <p className="text-xs text-slate-500">Require invite to join</p>
+                  {/* Big counter */}
+                  <div className="flex items-end gap-3 mb-3">
+                    <span className="text-5xl font-black leading-none">{activeProgram.accepted_members}</span>
+                    <div className="mb-1">
+                      <span className="text-xl text-slate-400 font-medium">/ {activeProgram.max_members}</span>
+                      <p className="text-xs text-slate-400 font-medium">Founding Businesses</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.invite_only} onChange={(e) => updateSetting('invite_only', e.target.checked)} />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
+                    <span className="ml-auto text-2xl font-black text-emerald-600 mb-1">
+                      {activeProgram.max_members > 0 ? Math.round((activeProgram.accepted_members / activeProgram.max_members) * 100) : 0}%
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">Beta Open</p>
-                      <p className="text-xs text-slate-500">Open signups</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.beta_open} onChange={(e) => updateSetting('beta_open', e.target.checked)} />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Active Cohort Program */}
-            <div className="md:col-span-2 space-y-6">
-              {activeProgram && (
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                  <div className={`absolute top-0 right-0 px-3 py-1 text-xs font-bold rounded-bl-xl ${activeProgram.status === 'accepting' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {activeProgram.status.toUpperCase()}
-                  </div>
-                  
-                  <h3 className="font-bold text-lg mb-1">Active Program</h3>
-                  <p className="text-sm text-slate-500 mb-6">{activeProgram.name} • {activeProgram.cohort}</p>
-
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                      <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Maximum Members</p>
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="number" 
-                          className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-lg font-bold focus:outline-none focus:border-emerald-500"
-                          value={activeProgram.max_members}
-                          onChange={(e) => updateProgram(activeProgram.id, { max_members: parseInt(e.target.value) || 0 })}
-                        />
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                      <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Founder Pricing</p>
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="text" 
-                          className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-lg font-bold focus:outline-none focus:border-emerald-500"
-                          value={activeProgram.founder_pricing}
-                          onChange={(e) => updateProgram(activeProgram.id, { founder_pricing: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <div className="flex justify-between items-end mb-2">
-                      <p className="text-sm font-medium text-slate-700">Program Fill Status</p>
-                      <p className="text-sm font-bold">{activeProgram.accepted_members} / {activeProgram.max_members} <span className="text-slate-400 font-normal">Accepted</span></p>
-                    </div>
-                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all ${activeProgram.accepted_members >= activeProgram.max_members ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                  {/* Clickable progress bar */}
+                  <button
+                    className="w-full group"
+                    onClick={() => setShowBusinessBreakdown(v => !v)}
+                    title="Click to see business breakdown"
+                  >
+                    <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden relative cursor-pointer">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${activeProgram.accepted_members >= activeProgram.max_members ? 'bg-rose-500' : 'bg-emerald-500'} group-hover:opacity-80`}
                         style={{ width: `${Math.min(100, (activeProgram.accepted_members / activeProgram.max_members) * 100)}%` }}
                       />
                     </div>
-                    {activeProgram.accepted_members >= activeProgram.max_members && (
-                      <p className="text-xs text-rose-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Cohort is fully booked.</p>
-                    )}
-                  </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5 text-right">
+                      {showBusinessBreakdown ? '▲ Hide breakdown' : '▼ Click to see business types'}
+                    </p>
+                  </button>
 
-                  <div className="flex items-center justify-between py-3 border-t border-slate-100">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">Auto-Close Program</p>
-                      <p className="text-xs text-slate-500">Close applications when max members reached</p>
+                  {/* Business type breakdown (animated) */}
+                  {showBusinessBreakdown && (
+                    <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Accepted by Business Type</p>
+                      {businessTypeBreakdown.length > 0 ? businessTypeBreakdown.map(({ name, count }) => (
+                        <div key={name} className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-slate-700 w-36 truncate">{name}</span>
+                          <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.round((count / (acceptedApps.length || 1)) * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-bold w-5 text-right">{count}</span>
+                        </div>
+                      )) : (
+                        <p className="text-sm text-slate-400 italic">No accepted applications yet.</p>
+                      )}
                     </div>
+                  )}
+
+                  {activeProgram.accepted_members >= activeProgram.max_members && (
+                    <p className="text-xs text-rose-500 mt-3 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Cohort is full</p>
+                  )}
+                </div>
+
+                {/* Inline edits */}
+                <div className="border-t border-slate-100 grid grid-cols-3 divide-x divide-slate-100">
+                  <div className="px-5 py-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Max Members</p>
+                    <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-500" value={activeProgram.max_members} onChange={(e) => updateProgram(activeProgram.id, { max_members: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="px-5 py-3 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Auto-Close</p>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={activeProgram.auto_close} onChange={(e) => updateProgram(activeProgram.id, { auto_close: e.target.checked })} />
                       <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
                   </div>
-                  
-                  <div className="flex items-center justify-between py-3 border-t border-slate-100">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">Force Program Status</p>
-                      <p className="text-xs text-slate-500">Manually open or close applications</p>
-                    </div>
-                    <select 
-                      className="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
-                      value={activeProgram.status}
-                      onChange={(e) => updateProgram(activeProgram.id, { status: e.target.value as any })}
-                    >
+                  <div className="px-5 py-3 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Status</p>
+                    <select className="bg-slate-50 border border-slate-200 text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500" value={activeProgram.status} onChange={(e) => updateProgram(activeProgram.id, { status: e.target.value as any })}>
                       <option value="accepting">Accepting</option>
                       <option value="closed">Closed</option>
                       <option value="draft">Draft</option>
                     </select>
                   </div>
                 </div>
-              )}
+
+                {/* Pricing & Benefits */}
+                <div className="border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pricing Plans</p>
+                      <button 
+                        onClick={() => updateProgram(activeProgram.id, { pricing_plans: [...(activeProgram.pricing_plans || []), { name: 'New Plan', price: '₦0/month' }] })}
+                        className="text-[10px] font-bold text-emerald-600 hover:underline"
+                      >+ Add Plan</button>
+                    </div>
+                    <div className="space-y-3">
+                      {(activeProgram.pricing_plans || []).map((plan, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input 
+                            className="w-2/5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                            value={plan.name}
+                            onChange={(e) => {
+                              const newPlans = [...(activeProgram.pricing_plans || [])];
+                              newPlans[i].name = e.target.value;
+                              updateProgram(activeProgram.id, { pricing_plans: newPlans });
+                            }}
+                          />
+                          <input 
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                            value={plan.price}
+                            onChange={(e) => {
+                              const newPlans = [...(activeProgram.pricing_plans || [])];
+                              newPlans[i].price = e.target.value;
+                              updateProgram(activeProgram.id, { pricing_plans: newPlans });
+                            }}
+                          />
+                          <button 
+                            onClick={() => {
+                              const newPlans = (activeProgram.pricing_plans || []).filter((_, idx) => idx !== i);
+                              updateProgram(activeProgram.id, { pricing_plans: newPlans });
+                            }}
+                            className="text-slate-400 hover:text-rose-500 px-1 font-bold text-lg leading-none"
+                          >×</button>
+                        </div>
+                      ))}
+                      {(activeProgram.pricing_plans || []).length === 0 && (
+                        <p className="text-xs text-slate-400 italic">No plans defined.</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Benefits</p>
+                      <button 
+                        onClick={() => updateProgram(activeProgram.id, { benefits: [...(activeProgram.benefits || []), 'New Benefit'] })}
+                        className="text-[10px] font-bold text-emerald-600 hover:underline"
+                      >+ Add Benefit</button>
+                    </div>
+                    <div className="space-y-2">
+                      {(activeProgram.benefits || []).map((benefit, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                          <span className="text-emerald-500 text-xs font-bold">✓</span>
+                          <input 
+                            className="flex-1 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 focus:outline-none text-xs font-medium text-slate-700 py-1"
+                            value={benefit}
+                            onChange={(e) => {
+                              const newBens = [...(activeProgram.benefits || [])];
+                              newBens[i] = e.target.value;
+                              updateProgram(activeProgram.id, { benefits: newBens });
+                            }}
+                          />
+                          <button 
+                            onClick={() => {
+                              const newBens = (activeProgram.benefits || []).filter((_, idx) => idx !== i);
+                              updateProgram(activeProgram.id, { benefits: newBens });
+                            }}
+                            className="text-slate-400 hover:text-rose-500 px-1 font-bold text-lg leading-none"
+                          >×</button>
+                        </div>
+                      ))}
+                      {(activeProgram.benefits || []).length === 0 && (
+                        <p className="text-xs text-slate-400 italic">No benefits defined.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Platform Toggles */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-5 space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Platform Access</p>
+              {[
+                { key: 'waitlist_enabled', label: 'Public Waitlist', desc: 'Accept waitlist emails' },
+                { key: 'invite_only', label: 'Invite Only', desc: 'Require invite to join' },
+                { key: 'beta_open', label: 'Beta Open', desc: 'Open public signups' },
+              ].map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">{label}</p>
+                    <p className="text-xs text-slate-400">{desc}</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={!!settings[key]} onChange={(e) => updateSetting(key, e.target.checked)} />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* ── ROW 2: Founder Analytics + Funnel ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Founder Analytics — Referral Sources */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Founder Analytics</p>
+                <p className="text-base font-bold mt-0.5">Where are founders coming from?</p>
+              </div>
+              <div className="px-6 py-5 space-y-4">
+                {referralBreakdown.length > 0 ? referralBreakdown.map(({ name, count, pct }, i) => {
+                  const barColors = ['bg-emerald-500', 'bg-blue-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'];
+                  return (
+                    <div key={name}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-semibold text-slate-800">{name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-black">{pct}%</span>
+                          <span className="text-xs text-slate-400">({count})</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${barColors[i % barColors.length]}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <p className="text-sm text-slate-400 italic py-4 text-center">No referral data yet. Add a <code className="text-xs bg-slate-100 px-1 rounded">referral_source</code> field to your application form.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Founder Funnel */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Founder Funnel</p>
+                <p className="text-base font-bold mt-0.5">Conversion from Apply → Active</p>
+              </div>
+              <div className="px-6 py-5">
+                {(() => {
+                  const funnelSteps = [
+                    { label: 'Applications', value: funnelStats.total, color: 'bg-slate-800', textColor: 'text-slate-800' },
+                    { label: 'Qualified', value: funnelStats.reviewing + funnelStats.interview_booked + funnelStats.approved + funnelStats.onboarding + funnelStats.active, color: 'bg-blue-500', textColor: 'text-blue-700' },
+                    { label: 'Interviewed', value: funnelStats.interview_booked + funnelStats.approved + funnelStats.onboarding + funnelStats.active, color: 'bg-violet-500', textColor: 'text-violet-700' },
+                    { label: 'Accepted', value: funnelStats.approved + funnelStats.onboarding + funnelStats.active, color: 'bg-emerald-500', textColor: 'text-emerald-700' },
+                    { label: 'Activated', value: funnelStats.onboarding + funnelStats.active, color: 'bg-emerald-600', textColor: 'text-emerald-800' },
+                    { label: 'Daily Active', value: funnelStats.active, color: 'bg-emerald-700', textColor: 'text-emerald-900' },
+                  ];
+                  const maxVal = funnelSteps[0].value || 1;
+                  return (
+                    <div className="space-y-3">
+                      {funnelSteps.map((step, i) => {
+                        const width = Math.max(8, Math.round((step.value / maxVal) * 100));
+                        const convRate = i > 0 && funnelSteps[i - 1].value > 0
+                          ? Math.round((step.value / funnelSteps[i - 1].value) * 100)
+                          : null;
+                        return (
+                          <div key={step.label}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-sm font-semibold ${step.textColor}`}>{step.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl font-black">{step.value}</span>
+                                {convRate !== null && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${convRate >= 50 ? 'bg-emerald-100 text-emerald-700' : convRate >= 25 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                                    {convRate}%
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ${step.color}`}
+                                style={{ width: `${width}%` }}
+                              />
+                            </div>
+                            {i < funnelSteps.length - 1 && (
+                              <div className="flex justify-center mt-1">
+                                <span className="text-slate-300 text-xs">↓</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* ── ROW 3: Application Pipeline ── */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 pt-5 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Application Pipeline</p>
+                <p className="text-base font-bold mt-0.5">Live funnel — {funnelStats.total} total</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Total', value: funnelStats.total, color: 'text-slate-900', bg: 'bg-slate-50 border-slate-200' },
+                  { label: 'Accepted', value: funnelStats.approved, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+                  { label: 'Rejected', value: funnelStats.rejected, color: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' },
+                ].map(s => (
+                  <div key={s.label} className={`${s.bg} border rounded-xl px-4 py-2 text-center min-w-[72px]`}>
+                    <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100">
+              {[
+                { label: 'Pending', value: funnelStats.pending, dot: 'bg-amber-400', sub: 'Awaiting review', action: true },
+                { label: 'Reviewing', value: funnelStats.reviewing, dot: 'bg-blue-400', sub: 'Being evaluated', action: false },
+                { label: 'Interviews', value: funnelStats.interview_booked, dot: 'bg-violet-400', sub: todaysInterviews > 0 ? `${todaysInterviews} today` : 'None today', action: false },
+                { label: 'Invited', value: funnelStats.approved, dot: 'bg-emerald-500', sub: 'Approved', action: false },
+                { label: 'Onboarding', value: funnelStats.onboarding, dot: 'bg-cyan-400', sub: 'Setting up', action: false },
+                { label: 'Active', value: funnelStats.active, dot: 'bg-emerald-700', sub: 'Fully live', action: false },
+                { label: 'Waiting', value: funnelStats.waitlisted, dot: 'bg-slate-300', sub: 'On waitlist', action: false },
+              ].map(step => (
+                <div key={step.label} className="px-4 py-5 flex flex-col items-center text-center">
+                  <div className={`w-2.5 h-2.5 rounded-full ${step.dot} mb-2`}></div>
+                  <p className="text-2xl font-black">{step.value}</p>
+                  <p className="text-xs font-semibold text-slate-700 mt-0.5">{step.label}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{step.sub}</p>
+                  {step.action && (
+                    <button onClick={() => setActiveTab('analytics')} className="mt-2 text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 hover:underline">
+                      Review <ArrowRight className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
         </main>
+
       ) : activeTab === 'analytics' ? (
         <main className="max-w-7xl mx-auto px-6 sm:px-10 pt-10">
           
@@ -522,14 +798,16 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* AI Question Feed & Recent Signups */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          {/* AI Question Feed & Qualified Leads */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Live AI Question Feed (1/3 width) */}
+            <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm self-start">
               <h2 className="text-lg font-bold mb-6 flex items-center justify-between">
                 Live AI Question Feed
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">Roadmap Ideas</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold uppercase tracking-wider">Roadmap Ideas</span>
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {recentQuestions.map((app, i) => (
                   <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-medium text-slate-800 mb-2">"{app.ai_question}"</p>
@@ -545,104 +823,98 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-              <h2 className="text-lg font-bold mb-6">Raw Lead Pipeline</h2>
-              <table className="w-full text-sm text-left whitespace-nowrap">
-                <thead className="text-xs text-slate-500 uppercase bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 rounded-tl-lg">Business</th>
-                    <th className="px-4 py-3">Contact Info</th>
-                    <th className="px-4 py-3 text-center">Score</th>
-                    <th className="px-4 py-3 text-right rounded-tr-lg">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applications.slice(0, 10).map((app, i) => (
-                    <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-slate-900">{app.business_name || 'Unnamed'}</p>
-                        <p className="text-xs text-slate-500">{app.business_type} • {app.country}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">{app.name || 'Unknown'}</p>
-                        <p className="text-xs text-slate-500">{app.email}</p>
-                        {(app.phone || app.referral_source || app.instagram) && (
-                          <div className="flex gap-3 text-[11px] text-slate-400 mt-0.5">
-                            {app.phone && <span>📞 {app.phone}</span>}
-                            {app.instagram && <span>@ {app.instagram}</span>}
-                            {app.referral_source && <span>📍 {app.referral_source}</span>}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${app.priority_score > 75 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
-                          {app.priority_score}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {app.status === 'approved' && (
-                          <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block">
-                            ✓ Approved
-                          </span>
-                        )}
-                        {app.status === 'rejected' && (
-                          <div className="flex justify-end gap-2">
-                            <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-block">
-                              ✗ Rejected
-                            </span>
-                            <button
-                              disabled={updatingId === app.id}
-                              onClick={() => handleUpdateStatus(app.id, 'pending')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-all disabled:opacity-50"
-                            >
-                              Undo
-                            </button>
-                          </div>
-                        )}
-                        {app.status === 'waitlisted' && (
-                          <div className="flex justify-end gap-2">
-                            <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-block">
-                              Waitlisted
-                            </span>
-                            <button
-                              disabled={updatingId === app.id}
-                              onClick={() => handleUpdateStatus(app.id, 'approved')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all disabled:opacity-50"
-                            >
-                              Approve
-                            </button>
-                          </div>
-                        )}
-                        {(!app.status || app.status === 'pending') && (
-                          <div className="flex justify-end gap-2">
-                            <button
-                              disabled={updatingId === app.id}
-                              onClick={() => handleUpdateStatus(app.id, 'rejected')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-all disabled:opacity-50"
-                            >
-                              Reject
-                            </button>
-                            <button
-                              disabled={updatingId === app.id}
-                              onClick={() => handleUpdateStatus(app.id, 'waitlisted')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-all disabled:opacity-50"
-                            >
-                              Waitlist
-                            </button>
-                            <button
-                              disabled={updatingId === app.id}
-                              onClick={() => handleUpdateStatus(app.id, 'approved')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all disabled:opacity-50 shadow-sm"
-                            >
-                              Approve
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Top Qualified Founders (2/3 width) */}
+            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold">Top Qualified Founders</h2>
+                <span className="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full">Sorted by Score</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-h-[800px] overflow-y-auto pr-2 pb-4">
+                {[...applications].sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0)).map((app, i) => {
+                  const score = app.priority_score || 0;
+                  const stars = Math.max(1, Math.min(5, Math.round(score / 20)));
+                  
+                  // Extract reasons
+                  const reasons: string[] = [];
+                  if (app.current_tools?.length) {
+                    app.current_tools.forEach((t: string) => reasons.push(`Uses ${t}`));
+                  }
+                  if (app.monthly_orders) reasons.push(`${app.monthly_orders} Orders`);
+                  if (app.referral_source) reasons.push(`From ${app.referral_source}`);
+                  if (app.country) reasons.push(`Based in ${app.country}`);
+
+                  return (
+                    <div key={app.id || i} className="border border-slate-200 rounded-xl p-5 hover:border-emerald-300 transition-colors bg-slate-50/50 flex flex-col">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="font-black text-lg text-slate-900 leading-tight">{app.business_name || 'Unnamed Business'}</p>
+                          <p className="text-xs font-semibold text-slate-500 mt-1">{app.business_type || 'Unknown Type'}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Score</p>
+                          <p className="text-3xl font-black text-emerald-600 leading-none mt-0.5">{score}</p>
+                          <p className="text-[10px] text-emerald-500 mt-1 tracking-widest">
+                            {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 mb-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Why</p>
+                        <div className="space-y-1.5">
+                          {reasons.slice(0, 4).map((r, ri) => (
+                            <p key={ri} className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                              <span className="text-emerald-500 text-sm">✅</span> {r}
+                            </p>
+                          ))}
+                          {reasons.length === 0 && (
+                            <p className="text-xs italic text-slate-400">No specific signals captured.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-200 pt-4 flex items-center justify-between">
+                        <div className="overflow-hidden pr-2">
+                          <p className="text-xs font-bold text-slate-900 truncate">{app.name || 'Unknown'}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">{app.email}</p>
+                          {(app.phone || app.instagram) && (
+                            <div className="flex flex-col gap-1.5 text-[10px] text-slate-500 mt-2">
+                              {app.phone && (
+                                <span className="flex items-center gap-1.5">
+                                  <Phone className="w-3 h-3 text-slate-400" /> {app.phone}
+                                </span>
+                              )}
+                              {app.instagram && (
+                                <span className="flex items-center gap-1.5">
+                                  <Instagram className="w-3 h-3 text-slate-400" /> 
+                                  {app.instagram.startsWith('@') ? app.instagram : `@${app.instagram}`}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            disabled={updatingId === app.id}
+                            value={app.status || 'pending'}
+                            onChange={(e) => handleUpdateStatus(app.id, e.target.value as any)}
+                            className="text-[10px] font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="reviewing">Reviewing</option>
+                            <option value="interview_booked">Interview Booked</option>
+                            <option value="approved">Approved ✓</option>
+                            <option value="onboarding">Onboarding</option>
+                            <option value="active">Active</option>
+                            <option value="waitlisted">Waitlisted</option>
+                            <option value="rejected">Rejected ✗</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

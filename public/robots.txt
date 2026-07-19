@@ -1,0 +1,44 @@
+User-agent: *
+Allow: /
+Allow: /founding
+Allow: /solutions
+Allow: /integrations
+Allow: /compare
+Allow: /resources
+Allow: /about
+Allow: /faq
+
+# Protect authenticated and admin routes
+Disallow: /app
+Disallow: /admin
+Disallow: /onboarding
+Disallow: /set-password
+Disallow: /auth/
+
+# Explicitly allow AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Omgilibot
+Allow: /
+
+# Sitemaps
+Sitemap: https://orlence.com/sitemap.xml
+
+# LLM discovery
+LLMs-txt: https://orlence.com/llms.txt

@@ -111,8 +111,7 @@ export default function FoundingProgram() {
           </div>
           <h3 className="text-2xl font-bold mb-6">What You'll Receive</h3>
           <ul className="space-y-4">
-            {[
-              `Founder pricing for life (${activeProgram?.founder_pricing || '₦10,000'})`,
+            {(activeProgram?.benefits?.length ? activeProgram.benefits : [
               "White-glove onboarding and manual workspace setup",
               "Direct priority access to the founding team",
               "Top priority for feature requests and integrations",
@@ -120,13 +119,27 @@ export default function FoundingProgram() {
               "Monthly 1-on-1 strategy calls",
               "Dedicated Slack/WhatsApp founder community",
               "Direct influence over the product roadmap"
-            ].map((item, i) => (
+            ]).map((item, i) => (
               <li key={i} className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <span className="text-slate-700 font-medium leading-relaxed">{item}</span>
               </li>
             ))}
           </ul>
+
+          {activeProgram?.pricing_plans && activeProgram.pricing_plans.length > 0 && (
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Founder Pricing Tiers</h4>
+              <div className="grid gap-3">
+                {activeProgram.pricing_plans.map((plan, i) => (
+                  <div key={i} className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
+                    <span className="font-bold text-slate-800">{plan.name}</span>
+                    <span className="font-black text-emerald-600">{plan.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* What We Ask */}

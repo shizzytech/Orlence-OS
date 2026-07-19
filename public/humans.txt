@@ -1,0 +1,28 @@
+/* TEAM */
+
+  Name: Orlence Team
+  Location: Nigeria, West Africa
+  Mission: Building the AI operating system for African businesses.
+  Contact: hello [at] orlence [dot] com
+  Twitter: @orlence
+
+/* THANKS */
+
+  Thank you to every founding business that trusted us early.
+  You are the reason Orlence exists.
+
+/* SITE */
+
+  Last update: 2026-07
+  Language: English
+  Doctype: HTML5
+  Framework: React + Vite (MVP), Next.js (coming soon)
+  Hosted on: Vercel
+
+/* TECHNOLOGY */
+
+  Frontend: React, TypeScript, Tailwind CSS
+  Backend: Supabase (PostgreSQL, Auth, Realtime)
+  AI: Google Gemini
+  Payments: Paystack, Flutterwave
+  Commerce: Bumpa, Shopify

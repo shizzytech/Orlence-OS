@@ -1,0 +1,13 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Contact: mailto:security@orlence.com
+Contact: mailto:hello@orlence.com
+Expires: 2027-01-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://orlence.com/.well-known/security.txt
+Policy: https://orlence.com/security-policy
+
+# Orlence Security
+# We take security seriously. If you have discovered a vulnerability,
+# please disclose it responsibly to security@orlence.com.
+# We commit to responding within 48 hours.
+-----END PGP SIGNED MESSAGE-----
