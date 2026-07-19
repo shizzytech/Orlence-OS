@@ -573,88 +573,42 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-24 px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">Pricing Built for Your Business</h2>
-          <p className="text-slate-500">Invest in intelligence, not just dashboards.</p>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className="p-8 rounded-xl border border-[#141414]/10 bg-slate-50 flex flex-col">
-            <h3 className="font-bold text-lg mb-2">Starter</h3>
-            <p className="text-xs text-slate-500 mb-4 h-8">Perfect for side hustles and small shops.</p>
-            <div className="mb-6">
-              <span className="text-3xl font-bold">₦7,500</span>
-              <span className="text-slate-500 text-sm">/mo</span>
-            </div>
-            <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> AI Dashboard</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> 3 Integrations</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Daily Briefing</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> AI Chat</li>
+      {/* Exclusive Founding Access */}
+      <section id="pricing" className="py-24 px-6 max-w-4xl mx-auto">
+        <div className="bg-slate-50 border border-emerald-500/20 rounded-3xl p-10 md:p-16 text-center shadow-2xl shadow-emerald-500/5">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Exclusive Founding Access</h2>
+          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+            We're accepting {activeProgram?.max_members || 20} founding businesses before public launch.
+          </p>
+          
+          <div className="bg-white rounded-2xl p-8 text-left border border-slate-100 max-w-lg mx-auto mb-10 shadow-sm">
+            <h3 className="font-bold text-[#141414] mb-4">Founding businesses receive:</h3>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3 text-slate-700">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span>Founder Pricing Protection</span>
+              </li>
+              <li className="flex items-center gap-3 text-slate-700">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span>White-Glove Priority Onboarding</span>
+              </li>
+              <li className="flex items-center gap-3 text-slate-700">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span>Direct Access to Our Founding Team</span>
+              </li>
+              <li className="flex items-center gap-3 text-slate-700">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span>Influence Over the Product Roadmap</span>
+              </li>
             </ul>
-            <button onClick={() => setIsApplicationOpen(true)} className="w-full py-2.5 rounded-sm text-sm font-bold transition-colors block text-center bg-white border border-[#141414]/20 hover:bg-slate-100 text-[#141414]">
-              Apply for Access
-            </button>
           </div>
 
-          <div className="p-8 rounded-xl border border-emerald-500 shadow-xl shadow-emerald-500/10 bg-white relative flex flex-col transform md:-translate-y-4">
-            <span className="absolute -top-3 inset-x-0 mx-auto w-max px-3 py-0.5 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-sm">Most Popular</span>
-            <h3 className="font-bold text-lg mb-2">Growth</h3>
-            <p className="text-xs text-slate-500 mb-4 h-8">For growing brands moving fast.</p>
-            <div className="mb-6">
-              <span className="text-3xl font-bold">₦20,000</span>
-              <span className="text-slate-500 text-sm">/mo</span>
-            </div>
-            <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
-              <li className="flex items-center gap-2 font-bold text-[#141414]"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Unlimited AI</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Forecasting</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Marketing AI</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Inventory AI</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Team Members</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> WhatsApp Integration</li>
-            </ul>
-            <button onClick={() => setIsApplicationOpen(true)} className="w-full py-3 rounded-sm text-sm font-bold transition-colors block text-center bg-[#141414] text-white hover:bg-emerald-600">
-              Apply for Access
-            </button>
-          </div>
-
-          <div className="p-8 rounded-xl border border-[#141414]/10 bg-slate-50 flex flex-col">
-            <h3 className="font-bold text-lg mb-2">Scale</h3>
-            <p className="text-xs text-slate-500 mb-4 h-8">For established SMEs.</p>
-            <div className="mb-6">
-              <span className="text-3xl font-bold">₦45,000</span>
-              <span className="text-slate-500 text-sm">/mo</span>
-            </div>
-            <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Everything in Growth</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Advanced Analytics</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Custom Reports</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Priority Support</li>
-            </ul>
-            <button onClick={() => setIsApplicationOpen(true)} className="w-full py-2.5 rounded-sm text-sm font-bold transition-colors block text-center bg-white border border-[#141414]/20 hover:bg-slate-100 text-[#141414]">
-              Apply for Access
-            </button>
-          </div>
-
-          <div className="p-8 rounded-xl border border-[#141414]/10 bg-slate-50 flex flex-col">
-            <h3 className="font-bold text-lg mb-2">Enterprise</h3>
-            <p className="text-xs text-slate-500 mb-4 h-8">For large retail operations.</p>
-            <div className="mb-6">
-              <span className="text-3xl font-bold">Custom</span>
-              <span className="text-slate-500 text-sm">/mo</span>
-            </div>
-            <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Dedicated AI Model</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Custom Integrations</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> API Access</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Account Manager</li>
-            </ul>
-            <a href="#waitlist" className="w-full py-2.5 rounded-sm text-sm font-bold transition-colors block text-center bg-white border border-[#141414]/20 hover:bg-slate-100 text-[#141414]">
-              Contact Sales
-            </a>
-          </div>
+          <button 
+            onClick={() => setIsApplicationOpen(true)} 
+            className="w-full md:w-auto px-8 py-4 bg-[#141414] text-white rounded-xl font-bold text-lg hover:bg-emerald-600 transition-colors inline-flex justify-center items-center gap-2"
+          >
+            Apply to Become a Founding Business <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </section>
 

@@ -109,69 +109,82 @@ export default function FoundingProgram() {
           <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h3 className="text-2xl font-bold mb-6">What You'll Receive</h3>
-          <ul className="space-y-4">
-            {(activeProgram?.benefits?.length ? activeProgram.benefits : [
-              "White-glove onboarding and manual workspace setup",
-              "Direct priority access to the founding team",
-              "Top priority for feature requests and integrations",
-              "Early access to new AI agents before public release",
-              "Monthly 1-on-1 strategy calls",
-              "Dedicated Slack/WhatsApp founder community",
-              "Direct influence over the product roadmap"
-            ]).map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                <span className="text-slate-700 font-medium leading-relaxed">{item}</span>
+          <h3 className="text-2xl font-bold mb-6">Build Orlence With Us</h3>
+          <p className="text-slate-600 mb-8">As one of our founding businesses, you'll receive:</p>
+          <ul className="space-y-6">
+            {[
+              { title: "Founder Pricing Protection", desc: "Lock in exclusive founder pricing while your subscription remains active." },
+              { title: "White-Glove Onboarding", desc: "We'll personally help you connect your tools and get your business running on Orlence." },
+              { title: "Early Access", desc: "Use new AI capabilities before they're released publicly." },
+              { title: "Direct Access to the Founders", desc: "Share feedback, ask questions, and help influence the roadmap." },
+              { title: "Priority AI Workflow Development", desc: "Request industry-specific workflows and automations that help shape future features." },
+              { title: "Founder Recognition", desc: "Receive a digital Founding Business badge and, with your permission, be featured as one of Orlence's earliest partners." },
+              { title: "Private Founder Community", desc: "Join a small group of ambitious business owners sharing ideas and feedback." },
+              { title: "Migration Assistance", desc: "We'll help you connect tools like Paystack, Bumpa, Google Sheets, and WhatsApp Business." }
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-4">
+                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-bold text-slate-900 mb-1">{item.title}</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
+                </div>
               </li>
             ))}
           </ul>
-
-          {activeProgram?.pricing_plans && activeProgram.pricing_plans.length > 0 && (
-            <div className="mt-8 pt-8 border-t border-slate-200">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Founder Pricing Tiers</h4>
-              <div className="grid gap-3">
-                {activeProgram.pricing_plans.map((plan, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="font-bold text-slate-800">{plan.name}</span>
-                    <span className="font-black text-emerald-600">{plan.price}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* What We Ask */}
-        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-          <div className="w-12 h-12 bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center mb-6">
-            <Handshake className="w-6 h-6" />
-          </div>
-          <h3 className="text-2xl font-bold mb-6">What We Ask</h3>
-          <ul className="space-y-4">
-            {[
-              "A 30-minute private onboarding session",
-              "Honest, unfiltered product feedback",
-              "Permission to learn from your unique workflows",
-              "Occasional short interviews during development"
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <Target className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                <span className="text-slate-700 font-medium leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-12">
-            <h3 className="text-xl font-bold mb-4">Who We're Looking For</h3>
-            <p className="text-slate-600 mb-4">Fast-growing SMEs, Fashion Brands, Retailers, and Agencies currently using tools like:</p>
-            <div className="flex flex-wrap gap-2">
-              {['Paystack', 'Bumpa', 'Shopify', 'WhatsApp Business', 'Google Sheets', 'Instagram'].map(tool => (
-                <span key={tool} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold">
-                  {tool}
-                </span>
-              ))}
+        <div className="space-y-12">
+          {/* What We Ask */}
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <div className="w-12 h-12 bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center mb-6">
+              <Handshake className="w-6 h-6" />
             </div>
+            <h3 className="text-2xl font-bold mb-4">What We Ask</h3>
+            <p className="text-slate-600 mb-6 font-medium leading-relaxed">We're looking for partners, not just customers. As a founding business, we ask that you:</p>
+            <ul className="space-y-4">
+              {[
+                "Spend 30 minutes onboarding with us.",
+                "Share honest feedback as you use Orlence.",
+                "Join an occasional product discussion.",
+                "Allow us to learn from your workflows (never your private business data without permission)."
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <Target className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                  <span className="text-slate-700 font-medium leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Why We're Limiting It */}
+          <div className="bg-emerald-950 p-8 rounded-3xl text-white shadow-xl shadow-emerald-900/20">
+            <h3 className="text-2xl font-bold mb-4 text-emerald-50">Why Only {activeProgram?.max_members || 50}?</h3>
+            <p className="text-emerald-100/90 leading-relaxed">
+              We believe great software is built alongside real businesses. By working closely with a small group of founding partners, we can provide personal onboarding, respond quickly to feedback, and build features that solve real operational challenges - not imagined ones.
+            </p>
+          </div>
+
+          {/* Who Should Apply */}
+          <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200">
+            <h3 className="text-2xl font-bold mb-6 text-slate-900">Who Should Apply?</h3>
+            <p className="text-slate-600 mb-6 font-medium">We're looking for businesses that:</p>
+            <ul className="space-y-4 mb-8">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-slate-700 font-medium leading-relaxed">Already use tools like Paystack, Bumpa, Shopify, WhatsApp, or Google Sheets.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-slate-700 font-medium leading-relaxed">Want to make faster, data-driven decisions.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-slate-700 font-medium leading-relaxed">Are excited to help shape the future of AI for African businesses.</span>
+              </li>
+            </ul>
+            <p className="text-slate-600 font-medium italic">
+              If that sounds like you, we'd love to build Orlence together.
+            </p>
           </div>
         </div>
 
@@ -200,6 +213,31 @@ export default function FoundingProgram() {
               )}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="px-6 max-w-3xl mx-auto mt-24">
+        <h2 className="text-3xl font-bold text-center mb-10">Frequently Asked Questions</h2>
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-slate-900 mb-3">Founder Pricing</h3>
+            <p className="text-slate-600 leading-relaxed mb-4">
+              We're currently working with a limited number of founding businesses to shape both the product and its pricing.
+            </p>
+            <p className="text-slate-600 leading-relaxed mb-4">
+              If accepted, you'll receive an exclusive founder rate that's lower than our future public pricing.
+            </p>
+            <p className="text-slate-600 leading-relaxed font-medium">
+              Your founder rate is confirmed before you commit.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-3">Will my data be private?</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Yes. Your business data is completely siloed and encrypted. We never share your data with other businesses, and our AI models do not train on your private customer records.
+            </p>
+          </div>
         </div>
       </section>
 
