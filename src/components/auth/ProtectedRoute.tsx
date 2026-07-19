@@ -67,11 +67,39 @@ export default function ProtectedRoute({ children, requireSuperAdmin = false }: 
   }
 
   const isCurrentViewOnboarding = window.location.pathname === '/onboarding';
+  const isCurrentViewSetPassword = window.location.pathname === '/set-password';
   
-  if (profile && !profile.onboarding_complete && !isCurrentViewOnboarding) {
-    window.location.href = '/onboarding';
+  // Route by onboarding STATE, not just whether user is authenticated.
+  // onboarding_step values: 0=invite sent, 1=password set, 2=profile done,
+  //                         3=integrations done, 4=fully onboarded
+  if (
+    profile &&
+    typeof profile.onboarding_step === 'number' &&
+    profile.onboarding_step < 4 &&
+    !isCurrentViewOnboarding &&
+    !isCurrentViewSetPassword
+  ) {
+    // Step 0 or 1 → send back to set-password if they somehow got here
+    if (profile.onboarding_step < 1) {
+      window.location.replace('/set-password');
+    } else {
+      window.location.replace('/onboarding');
+    }
+    return null;
+  }
+
+  // Backward-compat: if profile exists but doesn't have onboarding_step yet,
+  // fall back to the old onboarding_complete boolean
+  if (
+    profile &&
+    profile.onboarding_step === undefined &&
+    !profile.onboarding_complete &&
+    !isCurrentViewOnboarding
+  ) {
+    window.location.replace('/onboarding');
     return null;
   }
 
   return <>{children}</>;
 }
+

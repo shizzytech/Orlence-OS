@@ -44,12 +44,15 @@ serve(async (req) => {
     }
 
     // 2. Invite the user
-    // The email will automatically be sent by Supabase using your template
+    // redirectTo ensures the email link always lands on /auth/callback
+    // regardless of the Supabase email template configuration
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       application.email,
       {
+        redirectTo: 'https://orlence-os.vercel.app/auth/callback',
         data: {
           full_name: application.name,
+          business_name: application.business_name,
         }
       }
     )

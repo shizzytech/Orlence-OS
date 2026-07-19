@@ -22,6 +22,8 @@ import LandingPage from './components/LandingPage';
 import AdminDashboard from './components/AdminDashboard';
 import LoginPage from './components/auth/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AuthCallback from './components/auth/AuthCallback';
+import SetPassword from './components/auth/SetPassword';
 import FoundingProgram from './components/FoundingProgram';
 import Onboarding from './components/Onboarding';
 
@@ -58,7 +60,7 @@ const INITIAL_INTEGRATIONS: Integration[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'onboarding'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'onboarding' | 'auth-callback' | 'set-password'>('landing');
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations'>('overview');
   const [businessData, setBusinessData] = useState<BusinessData>(SAMPLES.sartorial_africa);
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
@@ -76,6 +78,12 @@ export default function App() {
       setCurrentView('founding');
     } else if (path === '/onboarding') {
       setCurrentView('onboarding');
+    } else if (path === '/auth/callback') {
+      setCurrentView('auth-callback');
+    } else if (path === '/set-password') {
+      setCurrentView('set-password');
+    } else if (path === '/app') {
+      setCurrentView('app');
     }
   }, []);
 
@@ -154,6 +162,14 @@ Would you like me to prepare a ${channelLabel}?`,
 
   if (currentView === 'login') {
     return <LoginPage />;
+  }
+
+  if (currentView === 'auth-callback') {
+    return <AuthCallback />;
+  }
+
+  if (currentView === 'set-password') {
+    return <SetPassword />;
   }
 
   if (currentView === 'admin') {
