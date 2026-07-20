@@ -97,14 +97,14 @@ export function LaunchProvider({ children }: { children: ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!programError && programData) {
         // Also fetch actual accepted count to be super accurate if auto_close is on
         const { count, error: countError } = await supabase
           .from('founder_applications')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'approved');
+          .in('status', ['approved', 'onboarding', 'active']);
           
         let actualAccepted = programData.accepted_members;
         if (!countError && count !== null) {
@@ -126,7 +126,7 @@ export function LaunchProvider({ children }: { children: ReactNode }) {
         const { count } = await supabase
           .from('founder_applications')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'approved');
+          .in('status', ['approved', 'onboarding', 'active']);
         if (count !== null) {
            setActiveProgram({ ...defaultProgram, accepted_members: count });
         }

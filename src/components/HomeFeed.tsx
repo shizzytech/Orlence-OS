@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { BusinessData, Integration, ChatMessage } from '../types';
+import RootCauseEngine from './RootCauseEngine';
+import OperationalHealth from './OperationalHealth';
 
 interface HomeFeedProps {
   businessData: BusinessData;
@@ -492,6 +494,20 @@ Would you like me to prepare a ${channelLabel}?`,
             </div>
           </div>
         </div>
+
+        {/* Root Cause Engine */}
+        <RootCauseEngine
+          businessData={businessData}
+          currency={currency}
+          onAskAI={handleSendMessage}
+        />
+
+        {/* Operational Health / Trust Score */}
+        <OperationalHealth
+          businessData={businessData}
+          currency={currency}
+          onAskAI={handleSendMessage}
+        />
 
         {/* Suggestion Prompts Section (Reducing Cognitive Load) */}
         <div className="bg-white p-5 border border-[#141414] rounded-none shadow-none" id="suggested-ceo-actions">

@@ -123,7 +123,11 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
     setScore(finalScore);
 
     try {
-      const { error: sbError } = await supabase.from('founder_applications').insert([{
+      // Generate a clean, unguessable 8-char founder token (e.g. "7HJ29AKS")
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const founderToken = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+
+      const appPayload = {
         program_id: activeProgram?.id,
         business_type: resolvedBusinessType,
         current_tools: resolvedTools,
@@ -139,10 +143,26 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
         country: contact.country,
         referral_source: contact.referral_source,
         priority_score: finalScore
-      }]);
+      };
+
+      const { error: sbError } = await supabase.from('founder_applications').insert([appPayload]);
 
       if (sbError) throw sbError;
-      setStep(100);
+
+      // Persist full application data keyed by this token
+      // This powers the Founder Portal without requiring DB SELECT permissions
+      const portalData = {
+        ...appPayload,
+        founder_token: founderToken,
+        submitted_at: new Date().toISOString(),
+        status: 'pending',
+      };
+      localStorage.setItem(`orlence_founder_${founderToken}`, JSON.stringify(portalData));
+      localStorage.setItem('orlence_last_token', founderToken);
+      // Keep legacy key for any older references
+      localStorage.setItem('orlence_founder_app', JSON.stringify(portalData));
+
+      window.location.href = `/founder/${founderToken}`;
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -227,7 +247,7 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
         )}
 
         {/* Chat Area */}
-        {step < 100 ? (
+        {step < 100 && (
           <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 pb-10">
 
             {/* ── Step 0: Business Type ── */}
@@ -569,81 +589,6 @@ export default function FounderApplication({ isOpen, onClose }: FounderApplicati
             )}
 
             <div ref={messagesEndRef} />
-          </div>
-        ) : (
-          /* ── Success Screen ── */
-          <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-slate-50 flex flex-col">
-            <div className="m-auto flex flex-col items-center text-center w-full max-w-md py-4">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-6"
-            >
-              <CheckCircle2 className="w-10 h-10" />
-            </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-2xl sm:text-3xl font-bold mb-4"
-            >
-              {contact.name ? `Welcome, ${contact.name.split(' ')[0]}.` : 'Welcome to the Founder\'s List.'}
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-slate-600 mb-8 max-w-md"
-            >
-              {contact.business_name ? `${contact.business_name} is on the list.` : 'Your business is on the list.'} We're reviewing applications in small batches - here's your initial profile:
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 w-full max-w-md text-left mb-8"
-            >
-              <div className="flex justify-between items-end border-b border-slate-100 pb-4 mb-4">
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Intelligence Score</p>
-                  <p className="text-3xl font-bold text-[#141414]">{score}%</p>
-                  <p className="text-xs text-slate-400 mt-1">{resolvedBusinessType} · {volume} orders/mo</p>
-                </div>
-                <Activity className={`w-8 h-8 ${score >= 80 ? 'text-emerald-500' : 'text-amber-500'}`} />
-              </div>
-
-              <p className="text-sm font-bold text-[#141414] mb-3">
-                What Orlence will solve for {contact.business_name || 'your business'}:
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>Solve: {resolvedChallenges[0]?.replace(/\.$/, '')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <span>Connect {resolvedTools[0] || 'your payment tools'} for live data</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-400">
-                  <div className="w-4 h-4 rounded-full border border-slate-300 mt-0.5 shrink-0" />
-                  <span>Answer: "{aiQuestion}" - live when you join</span>
-                </li>
-              </ul>
-            </motion.div>
-
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              onClick={onClose}
-              className="text-sm font-bold text-emerald-600 hover:text-emerald-700 underline"
-            >
-              Close and return to site
-            </motion.button>
-            </div>
           </div>
         )}
       </motion.div>

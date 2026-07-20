@@ -25,6 +25,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import AuthCallback from './components/auth/AuthCallback';
 import SetPassword from './components/auth/SetPassword';
 import FoundingProgram from './components/FoundingProgram';
+import ApplicationSuccess from './components/ApplicationSuccess';
+import FounderLogin from './components/FounderLogin';
+import FounderPortal from './components/FounderPortal';
 import Onboarding from './components/Onboarding';
 
 const INITIAL_INTEGRATIONS: Integration[] = [
@@ -60,10 +63,11 @@ const INITIAL_INTEGRATIONS: Integration[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'onboarding' | 'auth-callback' | 'set-password'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'founding-welcome' | 'founder-login' | 'founder-portal' | 'onboarding' | 'auth-callback' | 'set-password'>('landing');
   const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations'>('overview');
   const [businessData, setBusinessData] = useState<BusinessData>(SAMPLES.sartorial_africa);
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
+  const [founderToken, setFounderToken] = useState<string | null>(null);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
@@ -76,6 +80,14 @@ export default function App() {
       setCurrentView('login');
     } else if (path === '/founding') {
       setCurrentView('founding');
+    } else if (path === '/founding/welcome') {
+      setCurrentView('founding-welcome');
+    } else if (path === '/founder') {
+      setCurrentView('founder-login');
+    } else if (path.startsWith('/founder/')) {
+      const tok = path.replace('/founder/', '').trim();
+      if (tok) { setFounderToken(tok); setCurrentView('founder-portal'); }
+      else { setCurrentView('founder-login'); }
     } else if (path === '/onboarding') {
       setCurrentView('onboarding');
     } else if (path === '/auth/callback') {
@@ -186,6 +198,18 @@ Would you like me to prepare a ${channelLabel}?`,
 
   if (currentView === 'founding') {
     return <FoundingProgram />;
+  }
+
+  if (currentView === 'founding-welcome') {
+    return <ApplicationSuccess />;
+  }
+
+  if (currentView === 'founder-login') {
+    return <FounderLogin />;
+  }
+
+  if (currentView === 'founder-portal') {
+    return <FounderPortal token={founderToken} />;
   }
 
   if (currentView === 'onboarding') {

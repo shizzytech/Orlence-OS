@@ -57,7 +57,7 @@ export default function AuthCallback() {
           .from('profiles')
           .select('onboarding_step, onboarding_complete')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         // 4. Route based on state — not just "is logged in".
         if (profileError || !profile) {

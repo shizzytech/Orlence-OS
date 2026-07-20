@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (!profileError && profileData) {
         setProfile(profileData);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('organization_members')
         .select('*, organizations(*)')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (!orgMemberError && orgMemberData && orgMemberData.organizations) {
         setOrganization(orgMemberData.organizations);

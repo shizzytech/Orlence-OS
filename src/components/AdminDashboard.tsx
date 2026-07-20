@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [approvedApp, setApprovedApp] = useState<{ email: string; name: string } | null>(null);
   const [showBusinessBreakdown, setShowBusinessBreakdown] = useState(false);
+  const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchData();
@@ -511,7 +512,7 @@ export default function AdminDashboard() {
           {/* ── ROW 2: Founder Analytics + Funnel ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* Founder Analytics — Referral Sources */}
+            {/* Founder Analytics - Referral Sources */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 pt-6 pb-4 border-b border-slate-100">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Founder Analytics</p>
@@ -606,7 +607,7 @@ export default function AdminDashboard() {
             <div className="px-6 pt-5 pb-3 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Application Pipeline</p>
-                <p className="text-base font-bold mt-0.5">Live funnel — {funnelStats.total} total</p>
+                <p className="text-base font-bold mt-0.5">Live funnel - {funnelStats.total} total</p>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
@@ -910,6 +911,23 @@ export default function AdminDashboard() {
                             <option value="rejected">Rejected ✗</option>
                           </select>
                         </div>
+                      </div>
+                      <div className="border-t border-slate-200 pt-3 mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Add note for founder..."
+                          value={noteInputs[app.id] || ''}
+                          onChange={(e) => setNoteInputs(prev => ({ ...prev, [app.id]: e.target.value }))}
+                          className="flex-1 text-[10px] border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500"
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddNote(app.id)}
+                        />
+                        <button
+                          onClick={() => handleAddNote(app.id)}
+                          disabled={!noteInputs[app.id]?.trim()}
+                          className="text-[10px] bg-slate-900 text-white px-3 py-1.5 rounded-lg font-bold disabled:opacity-50"
+                        >
+                          Send
+                        </button>
                       </div>
                     </div>
                   );

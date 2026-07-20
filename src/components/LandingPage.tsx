@@ -19,14 +19,16 @@ import {
   AlertTriangle,
   Clock,
   ArrowDownToLine,
-  Activity
+  Activity,
+  PackageX,
+  Truck,
+  Search,
+  Package
 } from 'lucide-react';
 import { useLaunch } from '../context/LaunchContext';
-import FounderApplication from './FounderApplication';
 
 export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) {
   const [activePrompt, setActivePrompt] = useState(0);
-  const [isApplicationOpen, setIsApplicationOpen] = useState(false);
   const { activeProgram } = useLaunch();
   const prompts = [
     "Why did sales drop yesterday?",
@@ -61,7 +63,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
           </div>
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setIsApplicationOpen(true)}
+              onClick={() => window.location.href = '/founding'}
               className={`${activeProgram?.status === 'closed' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-[#141414] hover:bg-emerald-600'} text-white px-5 py-2 text-sm font-medium rounded-sm transition-colors flex items-center gap-2`}
             >
               {activeProgram?.status === 'closed' ? 'Join Waitlist' : 'Apply for Access'} <ArrowRight className="w-4 h-4" />
@@ -520,6 +522,136 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
         </div>
       </section>
 
+      {/* Root Cause Analysis Feature */}
+      <section className="py-32 px-6">
+        <div className="max-w-6xl mx-auto">
+
+          {/* Header */}
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold mb-6">
+              <Search className="w-4 h-4" /> Root Cause Analysis
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5">
+              Stop guessing. Start knowing.{' '}<span className="text-emerald-600">Why.</span>
+            </h2>
+            <p className="text-xl text-slate-500 max-w-2xl mx-auto">
+              Most dashboards tell you <em>what</em> happened. Orlence tells you <em>why</em> it happened - by connecting data across every system you use.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+
+            {/* Left: The Question */}
+            <div>
+              <div className="bg-slate-900 rounded-3xl p-8 text-white mb-6 shadow-2xl">
+                <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4">Owner asks Orlence</p>
+                <p className="text-xl font-bold text-white leading-relaxed">
+                  "Why were 14 orders delivered late this week?"
+                </p>
+              </div>
+
+              {/* Before vs After */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-6">
+                  <p className="text-xs font-bold uppercase tracking-widest text-rose-500 mb-3">Without Orlence</p>
+                  <p className="font-bold text-slate-800 text-sm mb-2">Owner assumes:</p>
+                  <p className="text-slate-600 text-sm italic mb-4">"Logistics is terrible."</p>
+                  <p className="font-bold text-slate-800 text-sm mb-2">Action taken:</p>
+                  <p className="text-slate-600 text-sm">Switches courier company.</p>
+                  <div className="mt-4 pt-4 border-t border-rose-200/60">
+                    <p className="text-rose-600 font-bold text-sm">Nothing improves. ✗</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200/60 rounded-2xl p-6">
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3">With Orlence</p>
+                  <p className="font-bold text-slate-800 text-sm mb-2">AI analyzes:</p>
+                  <p className="text-slate-600 text-sm mb-4">Inventory, Orders, Payments, Couriers, Chats</p>
+                  <p className="font-bold text-slate-800 text-sm mb-2">Real cause found:</p>
+                  <p className="text-slate-600 text-sm">Inventory shortage.</p>
+                  <div className="mt-4 pt-4 border-t border-emerald-200/60">
+                    <p className="text-emerald-600 font-bold text-sm">Problem solved. ✓</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: The Analysis */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">Orlence</p>
+                  <p className="text-xs text-slate-400">Root Cause Report - Order #248</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Activity className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Payment · Paystack</p>
+                    <p className="text-sm text-slate-700 font-medium">✓ Confirmed immediately</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-100">
+                  <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <PackageX className="w-4 h-4 text-rose-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Inventory · Bumpa</p>
+                    <p className="text-sm text-rose-700 font-semibold">✗ Out of stock at time of order</p>
+                    <p className="text-xs text-rose-500 mt-1">Restocked 2 days later</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50">
+                  <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Truck className="w-4 h-4 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Courier</p>
+                    <p className="text-sm text-slate-700 font-medium">✓ Picked up within 2 hrs of restock</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50">
+                  <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <MessageSquare className="w-4 h-4 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Customer Messages</p>
+                    <p className="text-sm text-slate-600 italic">"We're waiting for new stock."</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conclusion */}
+              <div className="bg-slate-900 rounded-2xl p-5 text-white">
+                <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3">Orlence Conclusion</p>
+                <p className="text-sm font-medium text-slate-200 leading-relaxed mb-4">
+                  Delay was caused by inventory shortage, not logistics.
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-rose-500/20 border border-rose-500/30 rounded-lg px-3 py-2">
+                    <p className="text-rose-300 font-bold">Primary (67%)</p>
+                    <p className="text-rose-200">Inventory shortage</p>
+                  </div>
+                  <div className="bg-white/10 border border-white/10 rounded-lg px-3 py-2">
+                    <p className="text-slate-300 font-bold">Secondary (33%)</p>
+                    <p className="text-slate-400">Courier transit</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Social Proof */}
       <section className="py-24 px-6 bg-slate-50 border-b border-[#141414]/10">
         <div className="max-w-6xl mx-auto">
@@ -604,7 +736,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
           </div>
 
           <button 
-            onClick={() => setIsApplicationOpen(true)} 
+            onClick={() => window.location.href = '/founding'} 
             className="w-full md:w-auto px-8 py-4 bg-[#141414] text-white rounded-xl font-bold text-lg hover:bg-emerald-600 transition-colors inline-flex justify-center items-center gap-2"
           >
             Apply to Become a Founding Business <ArrowRight className="w-5 h-5" />
@@ -620,7 +752,7 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
           <p className="text-xl text-emerald-200 mb-10">We're inviting the first {activeProgram?.max_members || 100} businesses to shape Orlence before public launch.</p>
           <div className="w-full flex justify-center">
             <button 
-              onClick={() => setIsApplicationOpen(true)}
+              onClick={() => window.location.href = '/founding'}
               className="bg-white text-emerald-950 px-8 py-4 text-lg font-bold rounded-sm hover:bg-emerald-50 transition-colors flex items-center gap-2 shadow-xl"
             >
               Start Application <ArrowRight className="w-5 h-5" />
@@ -628,8 +760,6 @@ export default function LandingPage({ onEnterApp }: { onEnterApp: () => void }) 
           </div>
         </div>
       </section>
-
-      <FounderApplication isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
 
       {/* Footer */}
       <footer className="bg-[#141414] text-slate-400 py-16 px-6 text-sm border-t border-white/10">
