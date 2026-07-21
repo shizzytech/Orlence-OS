@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, PackageX, Truck, Clock, UserX, Zap, ArrowRight } from 'lucide-react';
 import { BusinessData } from '../types';
 
@@ -33,8 +33,8 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
 
     if (outOfStock.length > 0) {
       const topItem = outOfStock[0];
-      const relatedOrders = orders.filter(o => o.product === topItem.name);
-      const pendingLost = relatedOrders.filter(o => o.status === 'Pending' || o.status === 'Cancelled').length;
+      const relatedOrders = orders.filter(o => o.products && o.products.some(p => p.toLowerCase().includes(topItem.name.toLowerCase())));
+      const pendingLost = relatedOrders.filter(o => o.status === 'Pending').length;
 
       detectedProblems.push({
         id: 'stock-out',

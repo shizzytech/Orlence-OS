@@ -1,8 +1,224 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Copy, Check, Download, CornerDownLeft, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Send, Bot, Sparkles, ChevronDown, ChevronUp, 
+  TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, 
+  Package, ArrowRight, Clock, Crown, Target, RefreshCw, 
+  Users, BarChart3, Copy, Check, User, Zap, Mail, MessageSquare, Filter
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { ChatMessage, BusinessData, Integration } from '../types';
+import { ChatMessage, BusinessData, Integration, Customer, Product } from '../types';
 
+// ═══════════════════════════════════════════════════════════════════════
+//  DYNAMIC UI WIDGET 1: CUSTOMER INTELLIGENCE APP WIDGET
+// ═══════════════════════════════════════════════════════════════════════
+interface CustomerWidgetProps {
+  customers: Customer[];
+  currency: string;
+  onAction: (prompt: string) => void;
+}
+
+function CustomerAppWidget({ customers, currency, onAction }: CustomerWidgetProps) {
+  const [filter, setFilter] = useState<'all' | 'vip' | 'churn'>('all');
+
+  const filtered = useMemo(() => {
+    if (filter === 'vip') return customers.filter(c => c.totalSpent > 80000);
+    if (filter === 'churn') return customers.filter(c => new Date(c.lastActive) < new Date('2026-06-25'));
+    return customers;
+  }, [customers, filter]);
+
+  return (
+    <div className="bg-white border border-[#141414] p-5 space-y-4 font-sans text-[#141414]">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-emerald-600" />
+          <h4 className="font-bold text-xs uppercase tracking-wider">Customer Intelligence App</h4>
+          <span className="text-[9px] font-mono bg-slate-100 px-2 py-0.5 border text-slate-600 font-bold">{customers.length} Profiles</span>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-1 text-[9px] font-mono">
+          <button 
+            onClick={() => setFilter('all')} 
+            className={`px-2 py-1 uppercase font-bold border transition-colors ${filter === 'all' ? 'bg-[#141414] text-white' : 'bg-slate-50 hover:bg-slate-100'}`}
+          >
+            All
+          </button>
+          <button 
+            onClick={() => setFilter('vip')} 
+            className={`px-2 py-1 uppercase font-bold border transition-colors ${filter === 'vip' ? 'bg-[#141414] text-white' : 'bg-slate-50 hover:bg-slate-100'}`}
+          >
+            VIPs (₦80k+)
+          </button>
+          <button 
+            onClick={() => setFilter('churn')} 
+            className={`px-2 py-1 uppercase font-bold border transition-colors ${filter === 'churn' ? 'bg-[#141414] text-white' : 'bg-slate-50 hover:bg-slate-100'}`}
+          >
+            Churn Risk
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="space-y-2 max-h-72 overflow-y-auto">
+        {filtered.map((c, i) => {
+          const isChurn = new Date(c.lastActive) < new Date('2026-06-25');
+          const isVip = c.totalSpent > 80000;
+
+          return (
+            <div key={c.id} className="p-3 bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs text-[#141414]">{c.name}</span>
+                  {isVip && <span className="text-[8px] font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 border border-amber-200 font-bold uppercase">👑 VIP</span>}
+                  {isChurn && <span className="text-[8px] font-mono bg-rose-100 text-rose-700 px-1.5 py-0.5 border border-rose-200 font-bold uppercase">⚠ Churn Risk</span>}
+                </div>
+                <p className="text-[10px] font-mono text-slate-500 mt-0.5">{c.email} · Last active {c.lastActive}</p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="text-right">
+                  <p className="font-black font-mono text-xs">{currency}{c.totalSpent.toLocaleString()}</p>
+                  <p className="text-[9px] font-mono text-slate-400">{c.totalOrders} orders</p>
+                </div>
+
+                <button
+                  onClick={() => onAction(isChurn 
+                    ? `Draft an urgent WhatsApp recovery message to re-engage ${c.name} (${c.email}).` 
+                    : `Create a VIP loyalty experience & bonus offer for ${c.name} (${c.email}).`
+                  )}
+                  className="bg-[#141414] text-[#E4E3E0] hover:bg-black px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-all"
+                >
+                  {isChurn ? 'Recover' : 'Engage'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  DYNAMIC UI WIDGET 2: INVENTORY MANAGEMENT APP WIDGET
+// ═══════════════════════════════════════════════════════════════════════
+interface InventoryWidgetProps {
+  products: Product[];
+  currency: string;
+  onAction: (prompt: string) => void;
+}
+
+function InventoryAppWidget({ products, currency, onAction }: InventoryWidgetProps) {
+  return (
+    <div className="bg-white border border-[#141414] p-5 space-y-4 font-sans text-[#141414]">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-amber-600" />
+          <h4 className="font-bold text-xs uppercase tracking-wider">Inventory Management Canvas</h4>
+          <span className="text-[9px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 border border-amber-200 font-bold">
+            {products.filter(p => p.stock <= 5).length} Items Need Attention
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-2 max-h-72 overflow-y-auto">
+        {products.map(p => {
+          const isCritical = p.stock === 0;
+          const isLow = p.stock > 0 && p.stock <= 5;
+
+          return (
+            <div key={p.id} className={`p-3 border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${
+              isCritical ? 'bg-rose-50 border-rose-200' : isLow ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div>
+                <p className="font-bold text-xs text-[#141414]">{p.name}</p>
+                <p className="text-[10px] font-mono text-slate-500 mt-0.5">SKU: {p.sku} · Price: {currency}{p.price.toLocaleString()} · Category: {p.category}</p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="text-right font-mono">
+                  <p className={`font-black text-xs ${isCritical ? 'text-rose-700' : isLow ? 'text-amber-700' : 'text-slate-700'}`}>
+                    {p.stock} units left
+                  </p>
+                  <p className="text-[9px] text-slate-400">{p.salesCount} sales/mo</p>
+                </div>
+
+                <button
+                  onClick={() => onAction(`Write a formal supplier reorder purchase order for ${p.name} (SKU: ${p.sku}). Current stock: ${p.stock} units.`)}
+                  className="bg-[#141414] text-[#E4E3E0] hover:bg-black px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-all"
+                >
+                  Reorder
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  DYNAMIC UI WIDGET 3: CAMPAIGN BUILDER & DISPATCH CANVAS
+// ═══════════════════════════════════════════════════════════════════════
+interface CampaignWidgetProps {
+  businessName: string;
+  currency: string;
+  onAction: (prompt: string) => void;
+}
+
+function CampaignAppWidget({ businessName, currency, onAction }: CampaignWidgetProps) {
+  const [dispatched, setDispatched] = useState(false);
+
+  return (
+    <div className="bg-white border border-[#141414] p-5 space-y-4 font-sans text-[#141414]">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-blue-600" />
+          <h4 className="font-bold text-xs uppercase tracking-wider">AI Campaign Builder Canvas</h4>
+          <span className="text-[9px] font-mono bg-blue-50 text-blue-700 px-2 py-0.5 border border-blue-200 font-bold">WhatsApp & Email</span>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 border border-slate-200 p-4 space-y-3 font-mono text-xs">
+        <div className="flex justify-between text-[10px] text-slate-500 border-b border-slate-200 pb-2">
+          <span>Target Audience: <strong className="text-[#141414]">VIP & Inactive Customers (74 recipients)</strong></span>
+          <span>Projected Impact: <strong className="text-emerald-700">{currency}520,000</strong></span>
+        </div>
+
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Campaign Preview:</p>
+          <p className="text-slate-800 italic mt-1 bg-white p-3 border border-slate-200 leading-relaxed text-xs">
+            "Hello from {businessName}! 🌟 We missed you! As one of our most valued customers, enjoy an exclusive 10% returning credit on your next order this weekend. Code: <strong className="text-emerald-700">RETURNING10</strong>."
+          </p>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        {dispatched ? (
+          <span className="bg-emerald-600 text-white px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4" /> Campaign Dispatched
+          </span>
+        ) : (
+          <button
+            onClick={() => {
+              setDispatched(true);
+              onAction(`Campaign launched for ${businessName}! Provide a 24-hour performance tracking checklist.`);
+            }}
+            className="bg-[#141414] text-[#E4E3E0] hover:bg-black px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Send className="w-3.5 h-3.5 text-emerald-400" /> Dispatch Campaign Now
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MAIN COPILOT BI WORKSPACE COMPONENT
+// ═══════════════════════════════════════════════════════════════════════
 interface AiChatProps {
   businessData: BusinessData;
   integrations: Integration[];
@@ -12,26 +228,23 @@ interface AiChatProps {
   setPendingPrompt?: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export default function AiChat({ 
-  businessData, 
-  integrations, 
-  chatHistory, 
+export default function AiChat({
+  businessData,
+  integrations,
+  chatHistory,
   setChatHistory,
   pendingPrompt,
   setPendingPrompt
 }: AiChatProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+  const [activeCanvas, setActiveCanvas] = useState<'none' | 'customers' | 'inventory' | 'campaign'>('customers');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory, isLoading]);
 
-  // Trigger pending prompt from parent navigation
   useEffect(() => {
     if (pendingPrompt && setPendingPrompt) {
       handleSendMessage(pendingPrompt);
@@ -39,41 +252,18 @@ export default function AiChat({
     }
   }, [pendingPrompt]);
 
-  // Dynamic suggested prompts based on the active dataset
-  const suggestedPrompts = React.useMemo(() => {
-    const defaultPrompts = [
-      "Run a complete business health summary & give 3 actions.",
-      "Show me my current inventory levels and stock bottlenecks.",
-      "Calculate our customer lifetime value (LTV) and top shoppers."
-    ];
-
-    if (businessData.businessName === "Sartorial Africa") {
-      return [
-        "How many sales did we make yesterday?",
-        "Who are our inactive leads (inactive for over 30 days)?",
-        "Draft a professional email newsletter promoting Adire Silk.",
-        "Give me a summary of our business health & 3 actions."
-      ];
-    } else if (businessData.businessName === "Kigali Coffee Co.") {
-      return [
-        "Compare Arabica vs Peaberry coffee roast performance.",
-        "Draft a B2B wholesale invoice for Jean-Paul Nkurunziza.",
-        "Are there any low-inventory equipment alerts?",
-        "Summarize our wholesale coffee sales trends."
-      ];
-    } else if (businessData.businessName === "AfroBeats Tech") {
-      return [
-        "Show today's total revenue and average order value (AOV).",
-        "Generate a report of product categories making the most sales.",
-        "List all customers with more than 2 completed orders.",
-        "What inventory items should we restock immediately?"
-      ];
-    }
-    return defaultPrompts;
-  }, [businessData]);
-
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim() || isLoading) return;
+
+    // Detect keywords to trigger interactive canvases
+    const lower = textToSend.toLowerCase();
+    if (lower.includes('customer') || lower.includes('vip') || lower.includes('churn') || lower.includes('shopper')) {
+      setActiveCanvas('customers');
+    } else if (lower.includes('inventory') || lower.includes('stock') || lower.includes('reorder') || lower.includes('supplier')) {
+      setActiveCanvas('inventory');
+    } else if (lower.includes('campaign') || lower.includes('whatsapp') || lower.includes('email') || lower.includes('marketing')) {
+      setActiveCanvas('campaign');
+    }
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -98,237 +288,195 @@ export default function AiChat({
       });
 
       const data = await response.json();
-      
       if (response.ok && data.text) {
-        const aiMessage: ChatMessage = {
+        setChatHistory(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'assistant',
           text: data.text,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setChatHistory(prev => [...prev, aiMessage]);
+        }]);
       } else {
         throw new Error(data.error || 'The co-pilot was unable to synthesize a response.');
       }
     } catch (err: any) {
-      console.error(err);
-      const errorMessage: ChatMessage = {
+      setChatHistory(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         sender: 'assistant',
-        text: `⚠️ **Error:** ${err.message || "Failed to communicate with Orlence's server. Please verify your GEMINI_API_KEY in the Secrets panel."}`,
+        text: `⚠️ **Error:** ${err.message}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setChatHistory(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleClearHistory = () => {
-    const currency = businessData.currency;
-    const businessName = businessData.businessName;
-
-    // Calculations
-    const yesterdayStr = "2026-07-14";
-    const yesterdayOrders = businessData.orders.filter(o => o.date === yesterdayStr);
-    const yesterdayRevenue = yesterdayOrders.filter(o => o.status === 'Paid').reduce((sum, o) => sum + o.amount, 0);
-
-    const lowStockCount = businessData.products.filter(p => p.stock <= 5).length;
-
-    // Determine inactive VIP customer (>= 7 days inactive)
-    const potentialVips = [...businessData.customers]
-      .filter(c => {
-        const lastActiveDate = new Date(c.lastActive);
-        const referenceDate = new Date("2026-07-15");
-        const diffDays = Math.round((referenceDate.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays >= 7;
-      })
-      .sort((a, b) => b.totalSpent - a.totalSpent);
-
-    let inactiveCustomerName = "Your best customer";
-    let inactiveDays = 18;
-    if (potentialVips.length > 0) {
-      const bestInactive = potentialVips[0];
-      inactiveCustomerName = bestInactive.name;
-      const lastActiveDate = new Date(bestInactive.lastActive);
-      const referenceDate = new Date("2026-07-15");
-      inactiveDays = Math.round((referenceDate.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
-    }
-
-    let ownerName = "Sarah";
-    let greetingPrefix = "Good morning";
-    let channelLabel = "WhatsApp campaign";
-    if (businessName === "Sartorial Africa") {
-      ownerName = "Sarah";
-      greetingPrefix = "Good morning";
-      channelLabel = "WhatsApp campaign";
-    } else if (businessName === "Kigali Coffee Co.") {
-      ownerName = "Marie Claire";
-      greetingPrefix = "Mwiriwe";
-      channelLabel = "wholesale re-engagement email";
-    } else if (businessName === "AfroBeats Tech") {
-      ownerName = "Farah";
-      greetingPrefix = "Good morning";
-      channelLabel = "re-activation sequence";
-    }
-
-    setChatHistory([
-      {
-        id: 'welcome',
-        sender: 'assistant',
-        text: `💼 **Meet your AI COO.**
-
-*"${greetingPrefix}, ${ownerName}."*
-
-* **Revenue yesterday:** \`${currency}${yesterdayRevenue.toLocaleString()}\`
-* **Inventory status:** \`${lowStockCount}\` ${lowStockCount === 1 ? 'product needs' : 'products need'} restocking.
-* **Customer alert:** Your best customer, **${inactiveCustomerName}**, hasn't ordered in \`${inactiveDays} days\`.
-
-Would you like me to prepare a ${channelLabel}?`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-  };
+  const executivePrompts = [
+    "Why are our sales falling in specific categories?",
+    "Show customer intelligence table & churn risks.",
+    "Inspect low inventory items & generate reorder PO.",
+    "Build a WhatsApp win-back campaign for inactive VIPs."
+  ];
 
   return (
-    <div className="flex flex-col bg-white border border-[#141414] rounded-none shadow-none h-[650px] overflow-hidden animate-fade-in" id="chat-container">
-      {/* Chat Header */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-[#141414] bg-[#D6D5D1]" id="chat-header">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#141414] text-[#E4E3E0] border border-[#141414] rounded-none flex items-center justify-center">
-            <Bot className="w-5 h-5" />
+    <div className="space-y-6 font-sans text-[#141414]" id="copilot-bi-workspace">
+      
+      {/* Workspace Header */}
+      <div className="bg-[#141414] text-[#E4E3E0] border border-[#141414] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Bot className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-bold uppercase tracking-tight">Business Intelligence Workspace</h2>
           </div>
-          <div>
-            <h4 className="text-xs font-mono uppercase tracking-wider text-[#141414] font-bold">Orlence Copilot</h4>
-            <span className="text-[10px] uppercase font-mono text-green-700 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-green-600 animate-pulse"></span>
-              Live Analytical Agent
-            </span>
-          </div>
+          <p className="text-xs text-[#E4E3E0]/60 font-mono">
+            {businessData.businessName} · Multi-turn Analysis Engine & Interactive Canvas
+          </p>
         </div>
-        
-        <button 
-          onClick={handleClearHistory}
-          className="text-[10px] font-mono uppercase border border-[#141414] bg-white text-[#141414] hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-none font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-          title="Clear Conversation History"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Clear History
-        </button>
-      </div>
 
-      {/* Chat Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#F0EFED]" id="chat-history">
-        {chatHistory.map((message) => (
-          <div 
-            key={message.id} 
-            className={`flex gap-4 max-w-[85%] ${message.sender === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
-          >
-            {/* Avatar */}
-            <div className={`w-8 h-8 rounded-none border border-[#141414] flex items-center justify-center shrink-0 ${
-              message.sender === 'user' ? 'bg-[#141414] text-[#E4E3E0]' : 'bg-white text-[#141414]'
-            }`}>
-              {message.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-            </div>
-
-            {/* Message Bubble */}
-            <div className={`space-y-2 rounded-none p-4.5 relative group border border-[#141414] ${
-              message.sender === 'user' 
-                ? 'bg-[#141414] text-[#E4E3E0] shadow-none' 
-                : 'bg-white text-[#141414] shadow-none'
-            }`}>
-              {/* Text content using Markdown */}
-              <div className="text-sm leading-relaxed prose max-w-none text-inherit markdown-body font-sans">
-                <ReactMarkdown>{message.text}</ReactMarkdown>
-              </div>
-
-              <div className={`flex justify-between items-center mt-2.5 pt-2 text-[9px] font-mono uppercase ${
-                message.sender === 'user' ? 'border-t border-[#E4E3E0]/20 text-[#E4E3E0]/60' : 'border-t border-slate-200 text-slate-500'
-              }`}>
-                <span>{message.timestamp}</span>
-                
-                {message.sender === 'assistant' && (
-                  <button 
-                    onClick={() => copyToClipboard(message.text, message.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-[#141414] px-2 py-0.5 rounded-none text-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] flex items-center gap-1 cursor-pointer font-mono font-bold uppercase text-[9px]"
-                    title="Copy response content"
-                  >
-                    {copiedId === message.id ? (
-                      <>
-                        <Check className="w-3 h-3 text-green-600" />
-                        <span>Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className="flex gap-4 max-w-[80%] mr-auto">
-            <div className="w-8 h-8 rounded-none border border-[#141414] bg-white text-[#141414] flex items-center justify-center shrink-0">
-              <Bot className="w-4.5 h-4.5 animate-bounce" />
-            </div>
-            <div className="bg-white border border-[#141414] text-[#141414] rounded-none p-4.5 shadow-none flex items-center gap-2 font-mono text-[11px] uppercase font-bold">
-              <Sparkles className="w-4 h-4 text-[#141414] animate-spin" />
-              <span>Calculating metrics & narratives...</span>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Quick Action Suggested Prompts */}
-      <div className="px-6 py-3 border-t border-[#141414] bg-[#D6D5D1] flex gap-2 overflow-x-auto scrollbar-none" id="chat-suggestions">
-        {suggestedPrompts.map((prompt) => (
+        {/* Canvas Switcher Tabs */}
+        <div className="flex items-center gap-2 text-xs font-mono">
           <button
-            key={prompt}
-            onClick={() => handleSendMessage(prompt)}
-            disabled={isLoading}
-            className="text-[10px] bg-white border border-[#141414] text-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] px-3.5 py-1.5 rounded-none font-mono uppercase font-bold shrink-0 shadow-none transition-all disabled:opacity-50 cursor-pointer"
+            onClick={() => setActiveCanvas('customers')}
+            className={`px-3 py-1.5 font-bold uppercase border transition-colors ${
+              activeCanvas === 'customers' ? 'bg-[#E4E3E0] text-[#141414]' : 'bg-white/5 text-[#E4E3E0] hover:bg-white/10'
+            }`}
           >
-            {prompt}
+            👥 Customers Canvas
           </button>
-        ))}
+          <button
+            onClick={() => setActiveCanvas('inventory')}
+            className={`px-3 py-1.5 font-bold uppercase border transition-colors ${
+              activeCanvas === 'inventory' ? 'bg-[#E4E3E0] text-[#141414]' : 'bg-white/5 text-[#E4E3E0] hover:bg-white/10'
+            }`}
+          >
+            📦 Inventory Canvas
+          </button>
+          <button
+            onClick={() => setActiveCanvas('campaign')}
+            className={`px-3 py-1.5 font-bold uppercase border transition-colors ${
+              activeCanvas === 'campaign' ? 'bg-[#E4E3E0] text-[#141414]' : 'bg-white/5 text-[#E4E3E0] hover:bg-white/10'
+            }`}
+          >
+            ⚡ Campaign Canvas
+          </button>
+        </div>
       </div>
 
-      {/* Input Message Area */}
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSendMessage(input);
-        }}
-        className="p-4 border-t border-[#141414] bg-white flex gap-3 items-center"
-        id="chat-input-form"
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={`Ask about ${businessData.businessName}'s metrics, forecasts, newsletters...`}
-          disabled={isLoading}
-          className="flex-1 bg-white hover:bg-slate-50 focus:bg-[#F0EFED] text-sm text-[#141414] placeholder-slate-400 px-4 py-3 rounded-none border border-[#141414] focus:border-[#141414] outline-none transition-all disabled:opacity-50 font-mono uppercase tracking-tight text-xs"
-        />
-        <button
-          type="submit"
-          disabled={!input.trim() || isLoading}
-          className="bg-[#141414] text-[#E4E3E0] hover:bg-black border border-[#141414] p-3 rounded-none transition-all disabled:opacity-50 cursor-pointer"
+      {/* Interactive UI Canvas Component (Renders based on selected tab or query) */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        {activeCanvas === 'customers' && (
+          <CustomerAppWidget 
+            customers={businessData.customers} 
+            currency={businessData.currency} 
+            onAction={handleSendMessage} 
+          />
+        )}
+        {activeCanvas === 'inventory' && (
+          <InventoryAppWidget 
+            products={businessData.products} 
+            currency={businessData.currency} 
+            onAction={handleSendMessage} 
+          />
+        )}
+        {activeCanvas === 'campaign' && (
+          <CampaignAppWidget 
+            businessName={businessData.businessName} 
+            currency={businessData.currency} 
+            onAction={handleSendMessage} 
+          />
+        )}
+      </motion.div>
+
+      {/* Co-Pilot Q&A Conversation Console */}
+      <div className="bg-white border border-[#141414] overflow-hidden" id="copilot-console">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-xs font-mono uppercase font-bold">
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            AI Analytical Thread
+          </span>
+          <span className="text-[10px] text-slate-400">Gemini 3.6 Pro Analytical Model</span>
+        </div>
+
+        {/* Chat Thread */}
+        <div className="p-6 max-h-[400px] overflow-y-auto space-y-4 bg-[#F0EFED]">
+          {chatHistory.map(msg => (
+            <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.sender === 'assistant' && (
+                <div className="w-7 h-7 bg-[#141414] text-[#E4E3E0] border border-[#141414] flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="w-3.5 h-3.5" />
+                </div>
+              )}
+
+              <div className={`max-w-[80%] p-4 border border-[#141414] ${
+                msg.sender === 'user' ? 'bg-[#141414] text-[#E4E3E0]' : 'bg-white text-[#141414]'
+              }`}>
+                <div className="text-xs leading-relaxed prose max-w-none text-inherit markdown-body font-sans">
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
+                <p className="text-[9px] font-mono text-slate-400 mt-2 text-right">{msg.timestamp}</p>
+              </div>
+
+              {msg.sender === 'user' && (
+                <div className="w-7 h-7 bg-[#141414] text-[#E4E3E0] border border-[#141414] flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+              )}
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="flex gap-3">
+              <div className="w-7 h-7 bg-[#141414] text-emerald-400 border border-[#141414] flex items-center justify-center shrink-0">
+                <Bot className="w-3.5 h-3.5 animate-bounce" />
+              </div>
+              <div className="bg-white border border-[#141414] p-3 text-xs font-mono font-bold uppercase flex items-center gap-2 text-slate-600">
+                <Sparkles className="w-4 h-4 text-emerald-600 animate-spin" />
+                Analyzing data & generating reasoning...
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Quick Executive Prompts */}
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex gap-2 overflow-x-auto scrollbar-none">
+          {executivePrompts.map(prompt => (
+            <button
+              key={prompt}
+              onClick={() => handleSendMessage(prompt)}
+              disabled={isLoading}
+              className="text-[9px] bg-white border border-[#141414] text-[#141414] hover:bg-[#141414] hover:text-[#E4E3E0] px-3 py-1.5 font-mono uppercase font-bold shrink-0 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+
+        {/* Input Form */}
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleSendMessage(input);
+          }}
+          className="p-4 bg-white border-t border-[#141414] flex gap-3 items-center"
         >
-          <Send className="w-4 h-4" />
-        </button>
-      </form>
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder={`Ask complex questions about ${businessData.businessName}'s sales, root causes, forecasts...`}
+            disabled={isLoading}
+            className="flex-1 bg-[#F0EFED] text-xs text-[#141414] placeholder-slate-400 px-4 py-3 border border-[#141414] outline-none font-mono uppercase tracking-tight"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || isLoading}
+            className="bg-[#141414] text-[#E4E3E0] hover:bg-black border border-[#141414] p-3 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }

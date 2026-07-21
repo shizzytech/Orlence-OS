@@ -18,12 +18,43 @@ export default function SetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
 
+  const [userEmail, setUserEmail] = useState('');
+
   useEffect(() => {
-    // Read the user's name from the session metadata set during invite
+    // Read parameters from URL if activated via link
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    const tokenParam = params.get('token');
+
+    if (emailParam) setUserEmail(emailParam);
+
+    if (tokenParam) {
+      // Lookup founder application by token to get their name & email
+      supabase
+        .from('founder_applications')
+        .select('name, email, business_name')
+        .eq('founder_token', tokenParam)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            if (data.name) setUserName(data.name);
+            if (data.email) setUserEmail(data.email);
+            // Save application info to local storage context for Onboarding to pick up
+            localStorage.setItem('orlence_active_application', JSON.stringify(data));
+          }
+        });
+    }
+
+    // Read the user's name from session metadata if already signed in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const meta = session.user.user_metadata;
-        setUserName(meta?.full_name || meta?.name || '');
+        if (meta?.full_name || meta?.name) {
+          setUserName(meta.full_name || meta.name);
+        }
+        if (session.user.email) {
+          setUserEmail(session.user.email);
+        }
       }
     });
   }, []);
@@ -50,35 +81,54 @@ export default function SetPassword() {
     setError(null);
 
     try {
-      // 1. Set the password on the auth user
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      // Check if user has active session
+      const { data: { session } } = await supabase.auth.getSession();
 
-      // 2. Get the current user to update their profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Session lost. Please try signing in again.');
-
-      // 3. Upsert the profile row — marking password as set (step 1)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert(
-          {
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || '',
-            onboarding_step: 1,
-            invite_status: 'accepted',
-          },
-          { onConflict: 'id' }
-        );
-
-      if (profileError) {
-        console.error('Profile upsert error:', profileError);
-        // Non-fatal — continue to onboarding even if profile update fails
+      if (session && userEmail && session.user.email !== userEmail) {
+        // Log out the current user (e.g., admin testing the flow) before creating the new account
+        await supabase.auth.signOut();
+        
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: userEmail,
+          password,
+          options: {
+            data: { full_name: userName }
+          }
+        });
+        if (signUpError) throw signUpError;
+      } else if (session) {
+        // Update password for existing user session (e.g., password reset flow)
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
+      } else {
+        // Sign up user directly with password (standard activation flow)
+        if (!userEmail) throw new Error('No email found for activation. Please check your activation link.');
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: userEmail,
+          password,
+          options: {
+            data: { full_name: userName }
+          }
+        });
+        if (signUpError) throw signUpError;
       }
 
-      // 4. Redirect to onboarding
-      window.location.replace('/onboarding');
+      // Get current user after update / signup
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Upsert profile
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email || userEmail,
+          full_name: userName || user.user_metadata?.full_name || '',
+          onboarding_step: 1,
+          invite_status: 'accepted'
+        }, { onConflict: 'id' });
+      }
+
+      // Redirect to onboarding
+      window.location.href = '/onboarding';
     } catch (err: any) {
       console.error('Set password error:', err);
       setError(err.message || 'Something went wrong. Please try again.');

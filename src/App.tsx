@@ -9,10 +9,17 @@ import {
   Activity,
   ArrowUpRight,
   Sparkles,
-  Home
+  Home,
+  BrainCircuit,
+  Bell
 } from 'lucide-react';
 import { BusinessData, Integration, ChatMessage } from './types';
 import { SAMPLES } from './data/samples';
+import { supabase } from './lib/supabase';
+import { useWorkspace } from './context/WorkspaceContext';
+import PresenceIndicator from './components/ui/PresenceIndicator';
+import NotificationCenter from './components/ui/NotificationCenter';
+import ProfileDropdown from './components/ui/ProfileDropdown';
 import Dashboard from './components/Dashboard';
 import AiChat from './components/AiChat';
 import DataManager from './components/DataManager';
@@ -29,6 +36,7 @@ import ApplicationSuccess from './components/ApplicationSuccess';
 import FounderLogin from './components/FounderLogin';
 import FounderPortal from './components/FounderPortal';
 import Onboarding from './components/Onboarding';
+import Workspace from './components/Workspace';
 
 const INITIAL_INTEGRATIONS: Integration[] = [
   // Commerce
@@ -63,8 +71,10 @@ const INITIAL_INTEGRATIONS: Integration[] = [
 ];
 
 export default function App() {
+  const { workspace, biScore, unreadCount } = useWorkspace();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'app' | 'admin' | 'login' | 'founding' | 'founding-welcome' | 'founder-login' | 'founder-portal' | 'onboarding' | 'auth-callback' | 'set-password'>('landing');
-  const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'dashboard' | 'chat' | 'data' | 'integrations' | 'workspace'>('overview');
   const [businessData, setBusinessData] = useState<BusinessData>(SAMPLES.sartorial_africa);
   const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
   const [founderToken, setFounderToken] = useState<string | null>(null);
@@ -92,11 +102,73 @@ export default function App() {
       setCurrentView('onboarding');
     } else if (path === '/auth/callback') {
       setCurrentView('auth-callback');
-    } else if (path === '/set-password') {
+    } else if (path === '/set-password' || path === '/activate') {
       setCurrentView('set-password');
     } else if (path === '/app') {
       setCurrentView('app');
     }
+  }, []);
+
+  // Sync user's real business name dynamically from Supabase & local storage
+  useEffect(() => {
+    const updateBusinessNameFromProfile = async () => {
+      let foundName = '';
+      
+      // 1. Check local storage application context
+      const localAppRaw = localStorage.getItem('orlence_active_application') || localStorage.getItem('orlence_founder_app');
+      if (localAppRaw) {
+        try {
+          const parsed = JSON.parse(localAppRaw);
+          if (parsed?.business_name) foundName = parsed.business_name;
+        } catch {}
+      }
+
+      // 2. Check Supabase session profile
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('business_name')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (profile?.business_name) {
+            foundName = profile.business_name;
+          }
+        }
+      } catch (e) {
+        console.error('Error loading business profile:', e);
+      }
+
+      if (foundName) {
+        setBusinessData(prev => ({
+          ...prev,
+          businessName: foundName
+        }));
+      }
+    };
+
+    updateBusinessNameFromProfile();
+
+    // Listen to local storage changes (from Workspace updates)
+    const handleStorageChange = () => updateBusinessNameFromProfile();
+    window.addEventListener('storage', handleStorageChange);
+
+    // Supabase Realtime channel for profile updates
+    const channel = supabase
+      .channel('realtime-profiles-sync')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        if (payload.new?.business_name) {
+          setBusinessData(prev => ({ ...prev, businessName: payload.new.business_name }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Trigger conversational greeting refresh whenever active business dataset changes
@@ -245,11 +317,11 @@ Would you like me to prepare a ${channelLabel}?`,
 
       {/* Main App Bar / Navigation Header */}
       <header className="bg-[#E4E3E0] border-b border-[#141414] sticky top-0 z-40" id="main-header">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-col md:flex-row justify-between md:items-center gap-4">
           
-          {/* Logo & Workspace Context Selector */}
+          {/* Logo & Dynamic Workspace Context */}
           <div className="flex items-center gap-4" id="logo-block">
-            <div className="p-2.5 bg-[#141414] text-[#E4E3E0] border border-[#141414]">
+            <div className="p-2.5 bg-[#141414] text-[#E4E3E0] border border-[#141414] shadow-sm">
               <Bot className="w-6 h-6" />
             </div>
             
@@ -257,38 +329,46 @@ Would you like me to prepare a ${channelLabel}?`,
             
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl">
-                  {businessData.businessName === "Sartorial Africa" ? '🇳🇬' : businessData.businessName === "Kigali Coffee Co." ? '🇷🇼' : '🇰🇪'}
-                </span>
                 <h1 className="text-xl font-bold uppercase tracking-tighter text-[#141414]">
-                  Orlence OS <span className="font-normal opacity-55 italic">/ {businessData.businessName}</span>
+                  Orlence OS <span className="font-normal opacity-55 italic">/ {workspace.businessName}</span>
                 </h1>
               </div>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-slate-600 mt-1.5 flex items-center gap-1">
-                <Globe2 className="w-3.5 h-3.5" /> Africa Regional Hub · Active Memory DB
+              <p className="text-[10px] font-mono uppercase tracking-wider text-slate-600 mt-1 flex items-center gap-1.5">
+                <Globe2 className="w-3.5 h-3.5" /> Workspace Active · Active Memory DB
               </p>
             </div>
           </div>
 
-          {/* Quick Header Mini Metrics */}
-          <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-6 text-xs" id="quick-metrics">
-            <div className="bg-white border border-[#141414] px-4 py-2 flex items-center gap-2.5">
-              <div className="w-2 h-2 bg-green-500 border border-[#141414]"></div>
+          {/* Intelligent Header Action Items & Controls */}
+          <div className="flex items-center gap-3 sm:gap-4 text-xs" id="header-actions">
+            {/* BI Score Badge */}
+            <div className="bg-white border border-[#141414] px-3 py-1.5 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
               <div>
-                <p className="text-[9px] text-slate-500 font-mono uppercase tracking-wider">Net Sales</p>
-                <p className="font-bold text-[#141414] text-sm font-mono">{businessData.currency}{totalRevenue.toLocaleString()}</p>
+                <p className="text-[8px] text-slate-500 font-mono uppercase tracking-wider leading-none">Business Intelligence</p>
+                <p className="font-bold text-[#141414] text-xs font-mono leading-tight mt-0.5">{biScore}% ★★★★★</p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#141414] px-4 py-2 flex items-center gap-2.5">
-              <div className={`w-2 h-2 border border-[#141414] ${lowStockCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></div>
-              <div>
-                <p className="text-[9px] text-slate-500 font-mono uppercase tracking-wider">Alerts</p>
-                <p className="font-bold text-[#141414] text-sm uppercase">
-                  {lowStockCount > 0 ? `${lowStockCount} Low Stock` : 'Stock Healthy'}
-                </p>
-              </div>
-            </div>
+            {/* Realtime Presence Indicator */}
+            <PresenceIndicator />
+
+            {/* Notification Bell Drawer Trigger */}
+            <button
+              onClick={() => setIsNotificationOpen(true)}
+              className="relative p-2 bg-white border border-[#141414] hover:bg-slate-50 transition-colors shrink-0"
+              title="Open Notification Center"
+            >
+              <Bell className="w-4 h-4 text-[#141414]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center border border-[#141414] animate-bounce">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Profile Dropdown */}
+            <ProfileDropdown onNavigateToTab={(tab) => setActiveTab(tab)} />
           </div>
         </div>
       </header>
@@ -350,7 +430,18 @@ Would you like me to prepare a ${channelLabel}?`,
                   : 'text-[#141414]/75 hover:text-[#141414] hover:bg-white/30'
               }`}
             >
-              <Layers className="w-4 h-4" /> Integrations Control
+              <BrainCircuit className="w-4 h-4" /> Connect Your Business
+            </button>
+
+            <button
+              onClick={() => setActiveTab('workspace')}
+              className={`flex items-center gap-2 px-5 py-3.5 text-xs font-bold uppercase tracking-wider transition-all border-r border-[#141414] shrink-0 ${
+                activeTab === 'workspace'
+                  ? 'bg-[#141414] text-[#E4E3E0]'
+                  : 'text-[#141414]/75 hover:text-[#141414] hover:bg-white/30'
+              }`}
+            >
+              <Building2 className="w-4 h-4" /> Workspace
             </button>
           </nav>
         </div>
@@ -376,7 +467,7 @@ Would you like me to prepare a ${channelLabel}?`,
             integrations={integrations} 
             onAskAi={(prompt) => {
               setPendingPrompt(prompt);
-              setActiveTab('overview');
+              setActiveTab('chat');
             }}
           />
         )}
@@ -408,6 +499,10 @@ Would you like me to prepare a ${channelLabel}?`,
             setIntegrations={setIntegrations}
           />
         )}
+
+        {activeTab === 'workspace' && (
+          <Workspace />
+        )}
       </main>
 
       {/* Global Application Footer */}
@@ -429,6 +524,11 @@ Would you like me to prepare a ${channelLabel}?`,
           </div>
         </div>
       </footer>
+      {/* Notification Center Drawer */}
+      <NotificationCenter 
+        isOpen={isNotificationOpen} 
+        onClose={() => setIsNotificationOpen(false)} 
+      />
     </div>
   );
 }

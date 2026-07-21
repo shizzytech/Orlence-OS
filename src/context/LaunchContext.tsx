@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { eventBus } from '../lib/eventBus';
 
 export interface PlatformSettings {
   waitlist_enabled: boolean;
@@ -140,6 +141,15 @@ export function LaunchProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshLaunchData();
+
+    // Subscribe to EventBus events from Orlence Core Sync Engine
+    const unsubscribe = eventBus.on('founder.status_changed', () => {
+      refreshLaunchData();
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const updateSetting = async (key: string, value: string | boolean) => {

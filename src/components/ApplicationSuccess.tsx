@@ -7,32 +7,58 @@ import {
 } from 'lucide-react';
 import { useLaunch } from '../context/LaunchContext';
 
+import { supabase } from '../lib/supabase';
+import { eventBus } from '../lib/eventBus';
+
 export default function ApplicationSuccess() {
   const { activeProgram } = useLaunch();
   const [appData, setAppData] = useState<any>(null);
 
   useEffect(() => {
-    // Read the submitted data from localStorage
-    const dataStr = localStorage.getItem('orlence_founder_app');
-    if (dataStr) {
-      try {
-        setAppData(JSON.parse(dataStr));
-      } catch (e) {
-        console.error(e);
+    // Read the submitted data from localStorage or query live Supabase application
+    const loadApplication = async () => {
+      let localData: any = null;
+      const dataStr = localStorage.getItem('orlence_founder_app') || localStorage.getItem('orlence_active_application');
+      if (dataStr) {
+        try {
+          localData = JSON.parse(dataStr);
+          setAppData(localData);
+        } catch (e) {
+          console.error(e);
+        }
       }
-    } else {
-      // Mock data for development if accessed directly
-      setAppData({
-        name: 'Prince',
-        business_name: 'Tolexy',
-        business_type: 'Restaurant',
-        monthly_orders: '50-200',
-        current_tools: ['Bumpa', 'Paystack'],
-        priority_score: 87,
-        id: 'ORL-00042'
-      });
-    }
+
+      // Fetch live data from Supabase if email is known
+      const email = localData?.email;
+      if (email) {
+        const { data: liveApp } = await supabase
+          .from('founder_applications')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (liveApp) {
+          setAppData(liveApp);
+        }
+      }
+    };
+
+    loadApplication();
   }, []);
+
+  // Real-time updates via EventBus
+  useEffect(() => {
+    if (!appData?.email) return;
+    const unsubscribe = eventBus.on('founder.status_changed', (evt) => {
+      if (evt.payload && evt.payload.email === appData.email) {
+        setAppData((prev: any) => ({ ...prev, ...evt.payload }));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [appData?.email]);
 
   const firstName = appData?.name ? appData.name.split(' ')[0] : 'Founder';
 

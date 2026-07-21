@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { eventBus } from '../lib/eventBus';
 import { useAuth } from '../context/AuthContext';
 import { useLaunch } from '../context/LaunchContext';
 import { 
@@ -24,6 +25,15 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+
+    // Listen to EventBus from Orlence Core Sync Engine
+    const unsubStatus = eventBus.on('founder.status_changed', () => fetchData());
+    const unsubName = eventBus.on('workspace.business_name_changed', () => fetchTeam());
+
+    return () => {
+      unsubStatus();
+      unsubName();
+    };
   }, []);
 
   useEffect(() => {
@@ -79,7 +89,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateStatus = async (appId: string, newStatus: 'approved' | 'rejected' | 'waitlisted' | 'pending' | 'reviewing' | 'interview_booked' | 'onboarding' | 'active') => {
+  const handleUpdateStatus = async (appId: string, newStatus: 'approved' | 'rejected' | 'waitlisted' | 'pending' | 'reviewing' | 'interview_booked' | 'onboarding' | 'active' | 'invite_sent') => {
     setUpdatingId(appId);
     try {
       // Find the application
@@ -113,6 +123,36 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAddNote = async (appId: string) => {
+    const text = noteInputs[appId]?.trim();
+    if (!text) return;
+
+    const targetApp = applications.find(a => a.id === appId);
+    if (!targetApp) return;
+
+    const newNote = {
+      text,
+      author: user?.user_metadata?.full_name || user?.email || 'Admin',
+      created_at: new Date().toISOString()
+    };
+
+    const updatedNotes = [...(targetApp.admin_notes || []), newNote];
+
+    try {
+      const { error } = await supabase
+        .from('founder_applications')
+        .update({ admin_notes: updatedNotes })
+        .eq('id', appId);
+
+      if (error) throw error;
+      
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, admin_notes: updatedNotes } : a));
+      setNoteInputs(prev => ({ ...prev, [appId]: '' }));
+    } catch (err) {
+      console.error('Error adding note:', err);
+    }
+  };
+
   // --- Data Processing ---
 
   // Funnel stats from live application data
@@ -136,24 +176,24 @@ export default function AdminDashboard() {
 
   // Business type breakdown (accepted only)
   const acceptedApps = applications.filter(a => a.status === 'approved' || a.status === 'onboarding' || a.status === 'active');
-  const bizTypeCounts = acceptedApps.reduce((acc: Record<string, number>, app) => {
-    const t = app.business_type || 'Other';
+  const bizTypeCounts = acceptedApps.reduce<Record<string, number>>((acc, app) => {
+    const t = (app.business_type as string) || 'Other';
     acc[t] = (acc[t] || 0) + 1;
     return acc;
   }, {});
-  const businessTypeBreakdown = Object.entries(bizTypeCounts)
-    .map(([name, count]) => ({ name, count }))
+  const businessTypeBreakdown: { name: string; count: number }[] = Object.entries(bizTypeCounts)
+    .map(([name, count]) => ({ name, count: count as number }))
     .sort((a, b) => b.count - a.count);
 
   // Referral sources
-  const referralSrc = applications.reduce((acc: Record<string, number>, app) => {
-    const s = app.referral_source || 'Unknown';
+  const referralSrc = applications.reduce<Record<string, number>>((acc, app) => {
+    const s = (app.referral_source as string) || 'Unknown';
     acc[s] = (acc[s] || 0) + 1;
     return acc;
   }, {});
   const totalReferrals = applications.length || 1;
-  const referralBreakdown = Object.entries(referralSrc)
-    .map(([name, count]) => ({ name, count, pct: Math.round((count / totalReferrals) * 100) }))
+  const referralBreakdown: { name: string; count: number; pct: number }[] = Object.entries(referralSrc)
+    .map(([name, count]) => ({ name, count: count as number, pct: Math.round(((count as number) / totalReferrals) * 100) }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
   
@@ -905,11 +945,26 @@ export default function AdminDashboard() {
                             <option value="reviewing">Reviewing</option>
                             <option value="interview_booked">Interview Booked</option>
                             <option value="approved">Approved ✓</option>
-                            <option value="onboarding">Onboarding</option>
-                            <option value="active">Active</option>
+                            <option value="invite_sent">Invite Sent ✉️</option>
+                            <option value="onboarding">Onboarding 🚀</option>
+                            <option value="active">Active Founder 🟢</option>
                             <option value="waitlisted">Waitlisted</option>
                             <option value="rejected">Rejected ✗</option>
                           </select>
+
+                          {(app.status === 'approved' || app.status === 'invite_sent') && (
+                            <button
+                              onClick={() => {
+                                const link = `${window.location.origin}/activate?token=${app.founder_token || app.id}&email=${encodeURIComponent(app.email || '')}`;
+                                navigator.clipboard.writeText(link);
+                                handleUpdateStatus(app.id, 'invite_sent');
+                                alert(`Activation Link copied to clipboard!\n\n${link}`);
+                              }}
+                              className="text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm shrink-0"
+                            >
+                              <span>✉️</span> {app.status === 'invite_sent' ? 'Resend Link' : 'Copy Invite Link'}
+                            </button>
+                          )}
                         </div>
                       </div>
                       <div className="border-t border-slate-200 pt-3 mt-3 flex gap-2">

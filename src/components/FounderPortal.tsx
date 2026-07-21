@@ -8,6 +8,7 @@ import {
   Map, BookOpen, LifeBuoy
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { eventBus } from '../lib/eventBus';
 import { useLaunch } from '../context/LaunchContext';
 
 // ─── Configuration ────────────────────────────────────────────────────────
@@ -138,22 +139,19 @@ export default function FounderPortal({ token }: Props) {
 
   useEffect(() => { loadData(); }, [token]);
 
-  // Real-time updates subscription
+  // Real-time updates via EventBus
   useEffect(() => {
     if (!appData?.id) return;
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'founder_applications', filter: `id=eq.${appData.id}` }, 
-        (payload) => {
-          setAppData((prev: any) => ({ ...prev, ...payload.new }));
-          setToast('🎉 Your application status has been updated!');
-          setTimeout(() => setToast(null), 5000);
-        }
-      )
-      .subscribe();
+    const unsubscribe = eventBus.on('founder.status_changed', (evt) => {
+      if (evt.payload && (evt.payload.id === appData.id || evt.payload.email === appData.email)) {
+        setAppData((prev: any) => ({ ...prev, ...evt.payload }));
+        setToast('🎉 Your application status has been updated!');
+        setTimeout(() => setToast(null), 5000);
+      }
+    });
 
-    return () => { supabase.removeChannel(channel); };
-  }, [appData?.id]);
+    return () => { unsubscribe(); };
+  }, [appData?.id, appData?.email]);
 
 
   if (loading) return (
@@ -176,13 +174,14 @@ export default function FounderPortal({ token }: Props) {
   const ai = calcAiAnalysis(appData);
   const passportNumber = `ORL-FDR-${String(appData.founder_number || '0').padStart(3, '0')}`;
   
-  // Mock Timeline Events based on current status
-  const mockTimeline = [
-    { title: 'Application Submitted', date: new Date(appData.created_at || appData.submitted_at || Date.now()).toLocaleDateString(), done: true },
-    { title: 'Community Joined', date: 'Pending', done: false },
-    { title: 'Team Started Review', date: cfg.step >= 2 ? 'Completed' : 'Pending', done: cfg.step >= 2 },
-    { title: 'Discovery Scheduled', date: cfg.step >= 3 ? 'Completed' : 'Pending', done: cfg.step >= 3 },
-    { title: 'Approved', date: cfg.step >= 4 ? 'Completed' : 'Pending', done: cfg.step >= 4 },
+  // Real-time Activity Timeline Events calculated dynamically from live status
+  const applicationDate = new Date(appData.created_at || appData.submitted_at || Date.now()).toLocaleDateString();
+  const liveTimeline = [
+    { title: 'Application Submitted', date: applicationDate, done: true },
+    { title: 'Intelligence Lab Evaluation', date: cfg.step >= 1 ? 'Completed' : 'Pending', done: true },
+    { title: 'Team Review Phase', date: cfg.step >= 2 ? 'In Progress / Verified' : 'Awaiting Review', done: cfg.step >= 2 },
+    { title: 'Discovery Session', date: cfg.step >= 3 ? 'Scheduled / Completed' : 'Pending Review', done: cfg.step >= 3 },
+    { title: 'Founding Charter Acceptance', date: cfg.step >= 4 ? 'Accepted into Founding Batch' : 'Pending Decision', done: cfg.step >= 4 },
   ];
 
   return (
@@ -341,7 +340,7 @@ export default function FounderPortal({ token }: Props) {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
               <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><Map className="w-5 h-5 text-emerald-600" /> Activity Timeline</h3>
               <div className="relative border-l-2 border-slate-100 ml-3 space-y-6">
-                {mockTimeline.map((item, i) => (
+                {liveTimeline.map((item, i) => (
                   <div key={i} className={`relative pl-6 ${item.done ? '' : 'opacity-40'}`}>
                     <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 bg-white ${item.done ? 'border-emerald-500' : 'border-slate-300'}`}>
                       {item.done && <div className="w-2 h-2 bg-emerald-500 rounded-full m-0.5" />}
