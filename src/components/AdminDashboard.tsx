@@ -155,12 +155,11 @@ export default function AdminDashboard() {
 
   // --- Data Processing ---
 
-  // Funnel stats from live application data
   const funnelStats = {
     pending:          applications.filter(a => !a.status || a.status === 'pending').length,
     reviewing:        applications.filter(a => a.status === 'reviewing').length,
     interview_booked: applications.filter(a => a.status === 'interview_booked').length,
-    approved:         applications.filter(a => a.status === 'approved').length,
+    approved:         applications.filter(a => a.status === 'approved' || a.status === 'invite_sent').length,
     onboarding:       applications.filter(a => a.status === 'onboarding').length,
     active:           applications.filter(a => a.status === 'active').length,
     rejected:         applications.filter(a => a.status === 'rejected').length,
@@ -175,7 +174,7 @@ export default function AdminDashboard() {
   ).length;
 
   // Business type breakdown (accepted only)
-  const acceptedApps = applications.filter(a => a.status === 'approved' || a.status === 'onboarding' || a.status === 'active');
+  const acceptedApps = applications.filter(a => a.status === 'approved' || a.status === 'invite_sent' || a.status === 'onboarding' || a.status === 'active');
   const bizTypeCounts = acceptedApps.reduce<Record<string, number>>((acc, app) => {
     const t = (app.business_type as string) || 'Other';
     acc[t] = (acc[t] || 0) + 1;

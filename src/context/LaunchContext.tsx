@@ -105,7 +105,7 @@ export function LaunchProvider({ children }: { children: ReactNode }) {
         const { count, error: countError } = await supabase
           .from('founder_applications')
           .select('*', { count: 'exact', head: true })
-          .in('status', ['approved', 'onboarding', 'active']);
+          .in('status', ['approved', 'invite_sent', 'onboarding', 'active']);
           
         let actualAccepted = programData.accepted_members;
         if (!countError && count !== null) {
@@ -127,7 +127,7 @@ export function LaunchProvider({ children }: { children: ReactNode }) {
         const { count } = await supabase
           .from('founder_applications')
           .select('*', { count: 'exact', head: true })
-          .in('status', ['approved', 'onboarding', 'active']);
+          .in('status', ['approved', 'invite_sent', 'onboarding', 'active']);
         if (count !== null) {
            setActiveProgram({ ...defaultProgram, accepted_members: count });
         }

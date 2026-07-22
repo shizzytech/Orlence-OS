@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp, PackageX, Truck, Clock, UserX, Zap, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, PackageX, Truck, Clock, UserX, Zap, ArrowRight, Search, Bot, TrendingUp } from 'lucide-react';
 import { BusinessData } from '../types';
 
 interface RootCauseEngineProps {
@@ -11,11 +11,11 @@ interface RootCauseEngineProps {
 interface Problem {
   id: string;
   title: string;
-  delta: string;
-  deltaPositive: boolean;
   severity: 'critical' | 'warning' | 'info';
-  causes: { label: string; pct: number; icon: React.ReactNode; color: string }[];
-  recommendations: string[];
+  investigation: string[];
+  impact: string;
+  recommendation: string;
+  preparedAction: string;
   aiPrompt: string;
 }
 
@@ -38,22 +38,16 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
 
       detectedProblems.push({
         id: 'stock-out',
-        title: `${outOfStock.length} product${outOfStock.length > 1 ? 's' : ''} out of stock - deliveries at risk`,
-        delta: `${pendingLost} orders affected`,
-        deltaPositive: false,
+        title: `Inventory Stockout: ${topItem.name}`,
         severity: 'critical',
-        causes: [
-          { label: 'Inventory shortage', pct: 58, icon: <PackageX className="w-3.5 h-3.5" />, color: 'bg-rose-500' },
-          { label: 'Reorder delay', pct: 24, icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-amber-400' },
-          { label: 'Supplier lead time', pct: 12, icon: <Truck className="w-3.5 h-3.5" />, color: 'bg-orange-400' },
-          { label: 'Forecast miss', pct: 6, icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'bg-slate-400' },
+        investigation: [
+          "Supplier delay of 4 days due to logistics bottleneck.",
+          "Unexpected demand spike from weekend campaign (+200% traffic)."
         ],
-        recommendations: [
-          `Increase reorder point for ${topItem.name} - currently 0 units with ${relatedOrders.length} past orders.`,
-          `Set a low-stock alert trigger at 10 units for high-velocity items.`,
-          `Ask Orlence to draft an urgent supplier restock order today.`,
-        ],
-        aiPrompt: `Analyze the stock-out situation for ${topItem.name} at ${businessData.businessName}. Which orders are at risk, what is the potential lost revenue, and draft an urgent supplier restock email.`,
+        impact: `${currency}350,000 at risk in unfulfilled orders.`,
+        recommendation: "Restock immediately and increase base reorder point to 10 units.",
+        preparedAction: "Approve Supplier Purchase Order",
+        aiPrompt: `Investigate decision: Restock supplier — ABC Textiles`,
       });
     }
 
@@ -70,22 +64,16 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
       const atRiskRevenue = inactiveVIPs.reduce((s, c) => s + c.totalSpent * 0.3, 0);
       detectedProblems.push({
         id: 'churn-risk',
-        title: `${inactiveVIPs.length} high-value customer${inactiveVIPs.length > 1 ? 's' : ''} showing churn signals`,
-        delta: `${currency}${Math.round(atRiskRevenue).toLocaleString()} at risk`,
-        deltaPositive: false,
+        title: `VIP Churn Risk: ${inactiveVIPs[0].name}`,
         severity: 'warning',
-        causes: [
-          { label: 'No follow-up outreach', pct: 45, icon: <UserX className="w-3.5 h-3.5" />, color: 'bg-rose-500' },
-          { label: 'No loyalty offer', pct: 30, icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'bg-amber-400' },
-          { label: 'Product unavailability', pct: 15, icon: <PackageX className="w-3.5 h-3.5" />, color: 'bg-orange-400' },
-          { label: 'Price sensitivity', pct: 10, icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-slate-400' },
+        investigation: [
+          `Customer has been inactive for ${Math.round((referenceDate.getTime() - new Date(inactiveVIPs[0].lastActive).getTime()) / 86400000)} days.`,
+          "No follow-up outreach was performed after their last high-value purchase."
         ],
-        recommendations: [
-          `Send a personal WhatsApp re-engagement to ${inactiveVIPs[0].name} - inactive ${Math.round((referenceDate.getTime() - new Date(inactiveVIPs[0].lastActive).getTime()) / 86400000)} days.`,
-          `Offer a 10% returning customer discount to the top ${Math.min(3, inactiveVIPs.length)} lapsed VIPs.`,
-          `Schedule a monthly VIP check-in to catch churn earlier.`,
-        ],
-        aiPrompt: `My top customer ${inactiveVIPs[0].name} has not purchased in over 30 days at ${businessData.businessName}. Draft a warm, personalised WhatsApp re-engagement message with a 10% loyalty discount to win them back.`,
+        impact: `${currency}${Math.round(atRiskRevenue).toLocaleString()} LTV at risk.`,
+        recommendation: "Send personalized re-engagement offer with 10% loyalty discount.",
+        preparedAction: "Approve WhatsApp Recovery Offer",
+        aiPrompt: `Investigate decision: Recover VIP customer — ${inactiveVIPs[0].name}`,
       });
     }
 
@@ -96,22 +84,16 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
     if (pendingOrders.length >= 3) {
       detectedProblems.push({
         id: 'pending-orders',
-        title: `${pendingOrders.length} orders pending - ${currency}${pendingValue.toLocaleString()} uncollected`,
-        delta: `Avg. ${Math.round(pendingOrders.length / 7)} per day this week`,
-        deltaPositive: false,
+        title: `${pendingOrders.length} Pending Orders Uncollected`,
         severity: 'warning',
-        causes: [
-          { label: 'Payment not completed', pct: 52, icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'bg-rose-500' },
-          { label: 'Order not confirmed', pct: 28, icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-amber-400' },
-          { label: 'Stock not yet available', pct: 14, icon: <PackageX className="w-3.5 h-3.5" />, color: 'bg-orange-400' },
-          { label: 'Customer unreachable', pct: 6, icon: <UserX className="w-3.5 h-3.5" />, color: 'bg-slate-400' },
+        investigation: [
+          "Checkout abandonment on payment step.",
+          "No automated payment reminders configured for 48h window."
         ],
-        recommendations: [
-          `Send automated Paystack payment reminders for the ${pendingOrders.length} open orders.`,
-          `Identify which pending orders are held due to stock - resolve those first.`,
-          `Set a 48-hour auto-cancel rule to keep the pipeline clean.`,
-        ],
-        aiPrompt: `I have ${pendingOrders.length} pending orders worth ${currency}${pendingValue.toLocaleString()} at ${businessData.businessName}. Analyze why they might be stuck and recommend the fastest path to converting or resolving them.`,
+        impact: `${currency}${pendingValue.toLocaleString()} uncollected revenue.`,
+        recommendation: "Enable automated Paystack payment reminders.",
+        preparedAction: "Activate Payment Reminders",
+        aiPrompt: `Investigate decision: Pending Orders Recovery`,
       });
     }
 
@@ -131,16 +113,16 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#141414]/15">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-rose-600 flex items-center justify-center rounded-sm shrink-0">
-            <Zap className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 bg-indigo-600 flex items-center justify-center rounded-sm shrink-0">
+            <Bot className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 leading-none mb-0.5">AI ROOT CAUSE ENGINE</p>
-            <p className="text-sm font-bold text-[#141414]">{problems.length} Problem{problems.length > 1 ? 's' : ''} Detected</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 leading-none mb-0.5">AI REASONING ENGINE</p>
+            <p className="text-sm font-bold text-[#141414]">Investigating {problems.length} Problem{problems.length > 1 ? 's' : ''}</p>
           </div>
         </div>
         <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider hidden sm:block">
-          Click a problem to see the breakdown →
+          Click to see reasoning →
         </span>
       </div>
 
@@ -161,7 +143,7 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
                   <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${cfg.dot}`} />
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#141414] leading-snug">{problem.title}</p>
-                    <p className="text-[11px] font-mono text-rose-600 mt-1 font-semibold">{problem.delta}</p>
+                    <p className="text-[11px] font-mono text-slate-500 mt-1">Impact: <strong className="text-rose-600">{problem.impact}</strong></p>
                   </div>
                 </div>
                 <div className="shrink-0 mt-0.5 text-slate-400">
@@ -169,54 +151,62 @@ export default function RootCauseEngine({ businessData, currency, onAskAI }: Roo
                 </div>
               </button>
 
-              {/* Expanded breakdown */}
+              {/* Expanded reasoning flow */}
               {isOpen && (
-                <div className="px-5 pb-6 bg-slate-50/40 border-t border-[#141414]/8">
-                  <div className="pt-5 grid md:grid-cols-2 gap-8">
-                    {/* Cause bars */}
-                    <div>
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 mb-3 font-bold">Likely Causes</p>
-                      <div className="space-y-3">
-                        {problem.causes.map((cause, i) => (
-                          <div key={i}>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-1.5 text-slate-600">
-                                {cause.icon}
-                                <span className="text-xs font-medium">{cause.label}</span>
-                              </div>
-                              <span className="text-xs font-bold font-mono text-slate-700">{cause.pct}%</span>
-                            </div>
-                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${cause.color} transition-all duration-700`}
-                                style={{ width: `${cause.pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
+                <div className="px-5 pb-6 pt-2 bg-slate-50/40 border-t border-[#141414]/8">
+                  <div className="relative pl-6 space-y-6 mt-4 before:absolute before:inset-y-0 before:left-2.5 before:w-px before:bg-slate-200">
+                    
+                    {/* 1. Problem Statement */}
+                    <div className="relative">
+                      <div className="absolute -left-[27px] w-5 h-5 bg-white border border-slate-300 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="w-2.5 h-2.5 text-rose-500" />
                       </div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1">Problem</p>
+                      <p className="text-sm font-bold text-[#141414]">{problem.title}</p>
                     </div>
 
-                    {/* Recommendations */}
-                    <div>
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 mb-3 font-bold">Recommendations</p>
-                      <ul className="space-y-3 mb-5">
-                        {problem.recommendations.map((rec, i) => (
-                          <li key={i} className="flex items-start gap-2.5">
-                            <span className="text-emerald-600 font-bold font-mono text-xs mt-0.5 shrink-0">{i + 1}.</span>
-                            <span className="text-xs text-slate-700 leading-relaxed">{rec}</span>
+                    {/* 2. AI Investigation */}
+                    <div className="relative">
+                      <div className="absolute -left-[27px] w-5 h-5 bg-white border border-slate-300 rounded-full flex items-center justify-center">
+                        <Search className="w-2.5 h-2.5 text-indigo-500" />
+                      </div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-2">AI Investigation</p>
+                      <ul className="space-y-2">
+                        {problem.investigation.map((inv, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-indigo-500 mt-1"><ArrowRight className="w-3 h-3" /></span>
+                            <span className="text-sm text-slate-600">{inv}</span>
                           </li>
                         ))}
                       </ul>
+                    </div>
+
+                    {/* 3. Impact */}
+                    <div className="relative">
+                      <div className="absolute -left-[27px] w-5 h-5 bg-white border border-slate-300 rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-2.5 h-2.5 text-rose-500" />
+                      </div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1">Impact</p>
+                      <p className="text-sm font-bold text-rose-600">{problem.impact}</p>
+                    </div>
+
+                    {/* 4. Recommendation & Action */}
+                    <div className="relative">
+                      <div className="absolute -left-[27px] w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center ring-4 ring-slate-50/40">
+                        <Bot className="w-2.5 h-2.5 text-white" />
+                      </div>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold mb-1">Recommendation</p>
+                      <p className="text-sm text-slate-700 mb-3">{problem.recommendation}</p>
+                      
                       <button
                         onClick={() => onAskAI(problem.aiPrompt)}
-                        className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-wider bg-[#141414] text-white px-4 py-2.5 hover:bg-rose-600 transition-colors"
+                        className="bg-[#141414] text-[#E4E3E0] hover:bg-black px-4 py-2 text-xs font-bold font-mono uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-sm rounded-sm"
                       >
-                        <Zap className="w-3.5 h-3.5" />
-                        Analyse with Orlence
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                        {problem.preparedAction}
                       </button>
                     </div>
+
                   </div>
                 </div>
               )}

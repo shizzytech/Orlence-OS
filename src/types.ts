@@ -60,6 +60,7 @@ export interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  widget?: 'EvidenceFileVIP' | 'EvidenceFileSupplier' | 'EvidenceFileCampaign';
   suggestedAction?: {
     type: 'download_report' | 'generate_invoice' | 'view_inventory';
     payload: any;
